@@ -4,6 +4,7 @@ import pandas as pd
 def load_data(filepath="original_data.xlsx"):
     #Load and return the cleaned Mine-Intel dataset
     data = pd.read_excel(filepath)
+    
     selected_columns = [
         "CMRR", "PRSUP", 
         "depth_of_ cover",

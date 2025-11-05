@@ -38,7 +38,7 @@ plt.grid(axis='y', linestyle='--', alpha=0.5)
 plt.ylim(0, df[["CMRR","PRSUP","Depth","IS","MH"]].max().max() * 1.1)
 
 plt.tight_layout()
-plt.savefig("Project Graphs/saved graphs/boxplot_features.png", dpi=300, bbox_inches="tight")
+#plt.savefig("Project Graphs/saved graphs/boxplot_features.png", dpi=300, bbox_inches="tight")
 plt.show()
 
 

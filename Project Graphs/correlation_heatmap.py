@@ -34,5 +34,5 @@ plt.xticks(rotation=0, fontsize=11)
 plt.yticks(rotation=0, fontsize=11)
 plt.tight_layout()
 
-plt.savefig("Project Graphs/saved graphs/correlation_heatmap.png", dpi=300, bbox_inches="tight")  # save inside folder
+#plt.savefig("Project Graphs/saved graphs/correlation_heatmap.png", dpi=300, bbox_inches="tight")  # save inside folder
 plt.show() 

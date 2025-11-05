@@ -36,5 +36,5 @@ for i, col in enumerate(df.columns, 1):
 plt.suptitle("Feature Distributions", fontsize=14, fontweight="bold")
 plt.tight_layout(rect=[0, 0, 1, 0.96])
 
-plt.savefig("Project Graphs/saved graphs/feature_distributions.png", dpi=300, bbox_inches="tight")
+#plt.savefig("Project Graphs/saved graphs/feature_distributions.png", dpi=300, bbox_inches="tight")
 plt.show()

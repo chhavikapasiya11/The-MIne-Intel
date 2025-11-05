@@ -45,6 +45,6 @@ plt.xticks(rotation=0, fontsize=11)
 plt.yticks(fontsize=11)
 plt.tight_layout()
 
-plt.savefig("Project Graphs/saved graphs/correlation_bar_graph.png", dpi=300, bbox_inches="tight")
+#plt.savefig("Project Graphs/saved graphs/correlation_bar_graph.png", dpi=300, bbox_inches="tight")
 
 plt.show()

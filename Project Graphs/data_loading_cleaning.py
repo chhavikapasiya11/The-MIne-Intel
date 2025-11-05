@@ -22,7 +22,8 @@ STEPS PERFORMED:
 
 import pandas as pd
 
-data = pd.read_excel("original_data.xlsx")
+data = pd.read_csv("original_data.csv")
+data.to_excel("original_data.xlsx",index=False)
 
 print("\nData loaded successfully!!")
 print(data.shape)

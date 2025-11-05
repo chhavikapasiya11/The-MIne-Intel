@@ -36,5 +36,5 @@ plt.ylabel("log(RFR)", fontsize=12)
 plt.grid(True, linestyle="--", alpha=0.6)
 plt.tight_layout()
 
-plt.savefig("Project Graphs/saved graphs/viscous_model_log.png", dpi=300, bbox_inches="tight")
+#plt.savefig("Project Graphs/saved graphs/viscous_model_log.png", dpi=300, bbox_inches="tight")
 plt.show()
