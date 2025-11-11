@@ -70,16 +70,13 @@ from sklearn.linear_model import LinearRegression
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.ensemble import RandomForestRegressor
 
-
-# model = LinearRegression()
-# model = DecisionTreeRegressor()
-# model = RandomForestRegressor()
-
 models = {
     "Linear Regression": LinearRegression(),
     "Decision Tree": DecisionTreeRegressor(),
     "Random Forest": RandomForestRegressor()
 }
+
+metrics_columns = ["Model", "Train_RMSE", "Test_RMSE", "Train_MAE", "Test_MAE", "Train_R2", "Test_R2", "CV_RMSE_Mean", "CV_RMSE_Std"]
 
 results = []
 
@@ -114,22 +111,59 @@ for name, model in models.items():
     }
     cv = cross_validate(model, mine_num_tr, mine_labels, cv=5, scoring=scoring)
 
+    cv_rmse_mean = -cv["test_rmse"].mean()
+    cv_rmse_std  = cv["test_rmse"].std()
+
     print("\n5-Fold CV Results:")
-    print("RMSE → Mean:", -cv["test_rmse"].mean(), " Std:", cv["test_rmse"].std())
+    print("RMSE → Mean:", cv_rmse_mean, " Std:", cv_rmse_std)
     print("MAE  → Mean:", -cv["test_mae"].mean(),  " Std:", cv["test_mae"].std())
     print("R²   → Mean:",  cv["test_r2"].mean(),   " Std:", cv["test_r2"].std())
 
     results.append([
-        name, rmse_train, rmse_test,
-        mae_train, mae_test,
-        r2_train, r2_test,
-        -cv["test_rmse"].mean(), cv["test_rmse"].std()
+        name,
+        rmse_train,
+        rmse_test,
+        mae_train,
+        mae_test,
+        r2_train,
+        r2_test,
+        cv_rmse_mean,
+        cv_rmse_std
     ])
 
-# save best model (Random Forest)
-rf = models["Random Forest"]
-dump(rf, "Mining.joblib")
-print("\nSaved Random Forest -> Mining.joblib ✅")
+# ---- RESULTS TABLE ----
+results_df = pd.DataFrame(results, columns=metrics_columns)
+
+# round to 4 decimals
+results_df = results_df.round(4)
+
+print("\n\n================ SUMMARY TABLE ================")
+print(results_df.to_string(index=False))
+print("===============================================")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# model = LinearRegression()
+# model = DecisionTreeRegressor()
+# model = RandomForestRegressor()
 
 # model.fit(mine_num_tr,mine_labels)
 
@@ -176,4 +210,4 @@ print("\nSaved Random Forest -> Mining.joblib ✅")
 # print(final_predictions,list(y_test))
 
 
-# print("Final Test RMSE:", final_rmse)
+# print("Final Test RMSE:", final_rmse)  keep only table for printing...no separately..also make 2 tables for each model..test and train..
