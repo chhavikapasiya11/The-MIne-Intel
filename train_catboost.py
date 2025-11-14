@@ -67,6 +67,13 @@ cat = CatBoostRegressor(
 
 cat.fit(X_train_prep, y_train)
 pred = cat.predict(X_test_prep)
+# Base CatBoost Train Metrics
+train_pred_base = cat.predict(X_train_prep)
+
+r2_base_train   = round(r2_score(y_train, train_pred_base), 4)
+mae_base_train  = round(mean_absolute_error(y_train, train_pred_base), 4)
+rmse_base_train = round(np.sqrt(mean_squared_error(y_train, train_pred_base)), 4)
+
 
 # Base Evaluation
 r2_base   = round(r2_score(y_test, pred), 4)
@@ -127,6 +134,13 @@ print("Best CV RMSE:", -rand_search.best_score_)
 
 # Evaluate Tuned Model
 pred2 = best_cat.predict(X_test_prep)
+# Tuned CatBoost Train Metrics
+train_pred_tuned = best_cat.predict(X_train_prep)
+
+r2_tuned_train   = round(r2_score(y_train, train_pred_tuned), 4)
+mae_tuned_train  = round(mean_absolute_error(y_train, train_pred_tuned), 4)
+rmse_tuned_train = round(np.sqrt(mean_squared_error(y_train, train_pred_tuned)), 4)
+
 
 r2_tuned   = round(r2_score(y_test, pred2), 4)
 mae_tuned  = round(mean_absolute_error(y_test, pred2), 4)
@@ -134,18 +148,20 @@ rmse_tuned = round(np.sqrt(mean_squared_error(y_test, pred2)), 4)
 
 
 # Summary Model
-# Summary Model
 summary = pd.DataFrame([
-    ["Base CatBoost",  r2_base,  mae_base,  rmse_base],
-    ["Tuned CatBoost", r2_tuned, mae_tuned, rmse_tuned]
-], columns=["Model", "R2", "MAE", "RMSE"])
+    ["Base CatBoost (Train)",  rmse_base_train, mae_base_train, r2_base_train],
+    ["Base CatBoost (Test)",   rmse_base,       mae_base,       r2_base],
 
-# spacing & formatting
+    ["Tuned CatBoost (Train)", rmse_tuned_train, mae_tuned_train, r2_tuned_train],
+    ["Tuned CatBoost (Test)",  rmse_tuned,       mae_tuned,       r2_tuned]
+], columns=["Model", "RMSE", "MAE", "R2"])
+
 summary = summary.round(4)
 
-print("\n================ SUMMARY TABLE ================\n")
+print("\n================ FULL SUMMARY TABLE ================\n")
 print(summary.to_string(index=False))
-print("\n===============================================\n")
+print("\n====================================================\n")
+
 
 
 # Save Tuned Model

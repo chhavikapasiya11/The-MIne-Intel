@@ -20,7 +20,7 @@ selected_columns = [
 df = pd.read_csv("original_data.csv")
 df = df[selected_columns]
 
-# 2) Log-transform (on numeric features only)
+# 2) Log-transform
 log_cols = [
     "CMRR", "PRSUP", "depth_of_ cover",
     "intersection_diagonal", "mining_hight"
@@ -28,7 +28,7 @@ log_cols = [
 
 df[log_cols] = np.log1p(df[log_cols])
 
-# 3) Train–Test Split (Stratified by fall)
+# 3) Train–Test Split
 split = StratifiedShuffleSplit(n_splits=1, test_size=0.2, random_state=42)
 
 for train_idx, test_idx in split.split(df, df["fall"]):
@@ -37,9 +37,9 @@ for train_idx, test_idx in split.split(df, df["fall"]):
 
 X_train = train.drop(["roof_fall_rate", "fall"], axis=1)
 y_train = train["roof_fall_rate"]
+X_test  = test.drop(["roof_fall_rate", "fall"], axis=1)
+y_test  = test["roof_fall_rate"]
 
-X_test = test.drop(["roof_fall_rate", "fall"], axis=1)
-y_test = test["roof_fall_rate"]
 
 # 4) Preprocessing Pipeline
 num_pipe = Pipeline([
@@ -52,16 +52,16 @@ X_test_prep  = num_pipe.transform(X_test)
 
 
 # ------------------------------------------
-# SAVE PREPROCESSING PIPELINE  (ADDED NEW)
+# SAVE PREPROCESSING PIPELINE
 # ------------------------------------------
 from joblib import dump
 dump(num_pipe, "models/preprocessing_pipeline_lightGBM.joblib")
 print("\nSaved preprocessing pipeline → models/preprocessing_pipeline_lightGBM.joblib")
+
+
 # ------------------------------------------
-
-
-
-# 5) LightGBM Model
+# 5) Base LightGBM Model
+# ------------------------------------------
 lgbm = LGBMRegressor(
     n_estimators=300,
     learning_rate=0.1,
@@ -73,19 +73,27 @@ lgbm = LGBMRegressor(
     random_state=42
 )
 
-# 6) Train
+# Train
 lgbm.fit(X_train_prep, y_train)
 
-# 7) Evaluate
-pred = lgbm.predict(X_test_prep)
+# TEST Metrics
+pred_test = lgbm.predict(X_test_prep)
 
-print()
-print("R2:",   round(r2_score(y_test, pred), 4))
-print("MAE:",  round(mean_absolute_error(y_test, pred), 4))
-print("RMSE:", round(np.sqrt(mean_squared_error(y_test, pred)), 4))
+r2_test_base   = round(r2_score(y_test, pred_test), 4)
+mae_test_base  = round(mean_absolute_error(y_test, pred_test), 4)
+rmse_test_base = round(np.sqrt(mean_squared_error(y_test, pred_test)), 4)
+
+# TRAIN Metrics
+pred_train = lgbm.predict(X_train_prep)
+
+r2_train_base   = round(r2_score(y_train, pred_train), 4)
+mae_train_base  = round(mean_absolute_error(y_train, pred_train), 4)
+rmse_train_base = round(np.sqrt(mean_squared_error(y_train, pred_train)), 4)
 
 
-# 8) 5-Fold Cross-Validation
+# ------------------------------------------
+# 6) 5-Fold Cross-Validation
+# ------------------------------------------
 from sklearn.model_selection import cross_validate
 
 scoring = {
@@ -108,7 +116,9 @@ print(f"CV R2 Mean   = {cv_r2_mean:.4f}")
 print("=============================================")
 
 
-# 9) RandomizedSearchCV
+# ------------------------------------------
+# 7) RandomizedSearchCV (Tuning)
+# ------------------------------------------
 from sklearn.model_selection import RandomizedSearchCV
 from scipy.stats import randint, uniform
 
@@ -139,25 +149,41 @@ print("\nBest Params:", rand_search.best_params_)
 print("Best CV RMSE:", -rand_search.best_score_)
 
 
-# 10) Evaluate Tuned Model
-pred2 = best_lgbm.predict(X_test_prep)
+# ------------------------------------------
+# 8) Tuned Model Evaluation
+# ------------------------------------------
+# TEST
+pred2_test = best_lgbm.predict(X_test_prep)
+r2_test_tuned   = round(r2_score(y_test, pred2_test), 4)
+mae_test_tuned  = round(mean_absolute_error(y_test, pred2_test), 4)
+rmse_test_tuned = round(np.sqrt(mean_squared_error(y_test, pred2_test)), 4)
 
-r2_2   = r2_score(y_test, pred2)
-mae_2  = mean_absolute_error(y_test, pred2)
-rmse_2 = np.sqrt(mean_squared_error(y_test, pred2))
+# TRAIN
+pred2_train = best_lgbm.predict(X_train_prep)
+r2_train_tuned   = round(r2_score(y_train, pred2_train), 4)
+mae_train_tuned  = round(mean_absolute_error(y_train, pred2_train), 4)
+rmse_train_tuned = round(np.sqrt(mean_squared_error(y_train, pred2_train)), 4)
 
-# Summary Table
+
+# ------------------------------------------
+# 9) Summary Table (Train + Test)
+# ------------------------------------------
 summary = pd.DataFrame([
-    ["Original LGBM", round(r2_score(y_test, pred),4),  round(mean_absolute_error(y_test, pred),4),  round(np.sqrt(mean_squared_error(y_test, pred)),4)],
-    ["Tuned LGBM",    round(r2_2,4),                    round(mae_2,4),                               round(rmse_2,4)]
+    ["Base LGBM (Train)", rmse_train_base, mae_train_base, r2_train_base],
+    ["Base LGBM (Test)",  rmse_test_base,  mae_test_base,  r2_test_base],
+
+    ["Tuned LGBM (Train)", rmse_train_tuned, mae_train_tuned, r2_train_tuned],
+    ["Tuned LGBM (Test)",  rmse_test_tuned,  mae_test_tuned,  r2_test_tuned]
 ],
-columns=["Model", "R2", "MAE", "RMSE"])
+columns=["Model", "RMSE", "MAE", "R2"])
 
-print("\n================ SUMMARY TABLE ================")
+print("\n================ FULL SUMMARY TABLE =================")
 print(summary.to_string(index=False))
-print("===============================================")
+print("=====================================================")
 
 
-# 11) Save Tuned Model (UPDATED PATH)
+# ------------------------------------------
+# 10) Save Tuned Model
+# ------------------------------------------
 dump(best_lgbm, "models/Mining_LightGBM_Model.joblib")
 print("\nSaved model → models/Mining_LightGBM_Model.joblib")

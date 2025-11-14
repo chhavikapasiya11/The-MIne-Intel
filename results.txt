@@ -1,0 +1,60 @@
+Tuned LightGBM performed the best overall with the lowest test error and highest R², followed closely by Tuned CatBoost and Random Forest, which also gave stable and realistic predictions. 
+
+XGBoost, Decision Tree, and Linear Regression showed overfitting or poor generalization, so they’re not reliable for this dataset.
+
+
+
+R2,RMSE AND MAE FOR ALL MODELS
+
+================ TRAIN METRICS ================
+            Model   	RMSE        MAE        R2
+Linear Regression 	4.8470      2.8311   0.0810
+Decision Tree 	    4.5012      2.5625   0.2074
+Random Forest 	    4.6902      2.7187   0.1395
+
+Base XGBoost	    0.2437      0.0660   0.9977
+
+Base CatBoost       1.9814      1.1860   0.8464
+Tuned CatBoost 	    3.2532      1.9726   0.5860
+
+Base LGBM		    1.1290      0.6355   0.9501
+Tuned LGBM 		    4.3621      2.6266   0.2556
+
+
+================ TEST METRICS =================
+    Model             RMSE        MAE       R2
+Linear Regression     5.6048    3.9046   0.0658
+Decision Tree         5.6420    3.5844   0.0534
+Random Forest         5.4508    3.6948   0.1165
+
+Base XGBoost     	 6.1056    3.1502   -0.1086
+Tuned XGBoost	     6.2013    3.3346   -0.1436
+
+Base CatBoost 	     5.9352    3.2670  -0.0476
+Tuned CatBoost 	     5.4832    3.2269   0.1059
+
+Base LGBM		     6.4048    3.5340  -0.2199
+Tuned LGBM 		     5.3048    3.5635   0.1632
+
+
+
+
+
+Random Data Models Comparison
+
+==================== MODEL COMPARISON ====================
+
+                               Model               Predicted Roof Fall Rate
+        Mining_CatBoost_Model.joblib                    2.2885
+        Mining_LightGBM_Model.joblib                    3.2039
+         Mining_XGBoost_Model.joblib                   13.7785
+Mining_LinearRegression_Model.joblib                   15.2786
+    Mining_DecisionTree_Model.joblib                    6.9864
+    Mining_RandomForest_Model.joblib                    4.7497
+
+===========================================================
+
+
+
+
+
