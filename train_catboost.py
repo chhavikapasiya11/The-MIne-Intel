@@ -25,7 +25,7 @@ df = df[selected_columns]
 log_cols = ["CMRR","PRSUP","depth_of_ cover","intersection_diagonal","mining_hight"]
 df[log_cols] = np.log1p(df[log_cols])
 
-df.head()
+# df.head()
 
 
 split = StratifiedShuffleSplit(n_splits=1, test_size=0.2, random_state=42)
@@ -49,6 +49,9 @@ num_pipe = Pipeline([
 X_train_prep = num_pipe.fit_transform(X_train)
 X_test_prep  = num_pipe.transform(X_test)
 
+# SAVE PREPROCESSING PIPELINE  (ADDED)
+dump(num_pipe, "models/preprocessing_pipeline_catboost.joblib")
+print("\nSaved preprocessing pipeline → models/preprocessing_pipeline_catboost.joblib")
 
 # BASE CATBOOST MODEL
 from catboost import CatBoostRegressor
@@ -146,8 +149,8 @@ print("\n===============================================\n")
 
 
 # Save Tuned Model
-dump(best_cat, "Mining_CatBoost_Model.joblib")
-print("Saved tuned model → Mining_CatBoost_Model.joblib")
+dump(best_cat, "models/Mining_CatBoost_Model.joblib")
+print("Saved tuned model → models/Mining_CatBoost_Model.joblib")
 
 
 

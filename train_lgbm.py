@@ -9,6 +9,7 @@ from sklearn.metrics import r2_score, mean_absolute_error, mean_squared_error
 
 from lightgbm import LGBMRegressor
 
+
 # 1) Load selected columns
 selected_columns = [
     "CMRR", "PRSUP", "depth_of_ cover",
@@ -48,6 +49,17 @@ num_pipe = Pipeline([
 
 X_train_prep = num_pipe.fit_transform(X_train)
 X_test_prep  = num_pipe.transform(X_test)
+
+
+# ------------------------------------------
+# SAVE PREPROCESSING PIPELINE  (ADDED NEW)
+# ------------------------------------------
+from joblib import dump
+dump(num_pipe, "models/preprocessing_pipeline_lightGBM.joblib")
+print("\nSaved preprocessing pipeline → models/preprocessing_pipeline_lightGBM.joblib")
+# ------------------------------------------
+
+
 
 # 5) LightGBM Model
 lgbm = LGBMRegressor(
@@ -135,8 +147,6 @@ mae_2  = mean_absolute_error(y_test, pred2)
 rmse_2 = np.sqrt(mean_squared_error(y_test, pred2))
 
 # Summary Table
-import pandas as pd
-
 summary = pd.DataFrame([
     ["Original LGBM", round(r2_score(y_test, pred),4),  round(mean_absolute_error(y_test, pred),4),  round(np.sqrt(mean_squared_error(y_test, pred)),4)],
     ["Tuned LGBM",    round(r2_2,4),                    round(mae_2,4),                               round(rmse_2,4)]
@@ -148,9 +158,6 @@ print(summary.to_string(index=False))
 print("===============================================")
 
 
-# 11) Save Tuned Model
-from joblib import dump
-dump(best_lgbm, "Mining_LightGBM_Model.joblib")
-print("\nSaved model → Mining_LightGBM_Model.joblib")
-
-
+# 11) Save Tuned Model (UPDATED PATH)
+dump(best_lgbm, "models/Mining_LightGBM_Model.joblib")
+print("\nSaved model → models/Mining_LightGBM_Model.joblib")
