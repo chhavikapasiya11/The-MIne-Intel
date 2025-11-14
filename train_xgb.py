@@ -149,6 +149,6 @@ print(f"RMSE = {rmse:.4f}")
 print(f"R²   = {r2:.4f}")
 print(f"MAE  = {mae:.4f}")
 
-dump(best_xgb, "Mining_XGBoost_Model.joblib")
-print("\nSaved model → Mining_XGBoost_Model.joblib")
+dump(best_xgb, "models/Mining_XGBoost_Model.joblib")
+print("\nSaved model → models/Mining_XGBoost_Model.joblib")
 
