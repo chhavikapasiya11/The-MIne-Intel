@@ -66,3 +66,20 @@ Random Forest :
 Mean  5.9049975418815315
 Std  1.397677846549526
 test rmse =5.918296871770407
+
+
+
+
+_____________________________________________________
+
+==================== MODEL COMPARISON ====================
+
+                               Model  Predicted Roof Fall Rate
+        Mining_CatBoost_Model.joblib                    2.2885
+        Mining_LightGBM_Model.joblib                    3.2039
+         Mining_XGBoost_Model.joblib                   13.7785
+Mining_LinearRegression_Model.joblib                   11.5543
+    Mining_DecisionTree_Model.joblib                   16.6700
+    Mining_RandomForest_Model.joblib                   12.4795
+
+===========================================================
