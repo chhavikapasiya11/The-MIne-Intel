@@ -170,3 +170,61 @@ print("Saved tuned model → models/Mining_CatBoost_Model.joblib")
 
 
 
+# ============================================================
+#    EXTRA: INTERPRETABILITY (Feature Importance, PDP, ICE, SHAP)
+# ============================================================
+
+print("\n=========== EXTRA CATBOOST INTERPRETABILITY START ===========\n")
+
+# Feature Importance
+fi = pd.Series(
+    best_cat.get_feature_importance(),
+    index=X_train.columns
+).sort_values(ascending=False)
+
+print("\n====== Feature Importance (Descending) ======")
+print(fi)
+
+print("\n====== Feature Importance (Ascending) ======")
+print(fi.sort_values(ascending=True))
+
+
+# PDP
+print("\n====== Sensitivity Analysis (Partial Dependence) ======")
+from sklearn.inspection import partial_dependence
+
+for col in X_train.columns:
+    idx = list(X_train.columns).index(col)
+    pdp = partial_dependence(best_cat, X_train_prep, [idx])
+    print(f"\nPDP for {col}:")
+    print("Grid:", pdp["grid_values"][0][:5], "...")
+    print("PD Values:", pdp["average"][0][:5], "...")
+
+
+# ICE
+print("\n====== Ceteris Paribus Profiles (ICE) ======")
+print("ICE shows how prediction changes when one feature varies, others stay fixed.")
+print("(Plots not displayed; only concept shown.)")
+
+
+# SHAP
+print("\n====== SHAP Explanations (Global + Local) ======")
+try:
+    import shap
+    shap.initjs()
+
+    explainer = shap.TreeExplainer(best_cat)
+    shap_values = explainer.shap_values(X_train_prep)
+    print("SHAP Global Summary computed (plot not shown).")
+
+    instance = X_test_prep[0].reshape(1, -1)
+    sv = explainer.shap_values(instance)
+
+    print("\nSHAP Local Explanation for first test sample:")
+    print(sv)
+
+except ImportError:
+    print("SHAP not installed → run: pip install shap")
+
+
+print("\n=========== EXTRA CATBOOST INTERPRETABILITY END ===========\n")
