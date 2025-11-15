@@ -18,8 +18,7 @@ Base CatBoost       1.9814      1.1860   0.8464
 Tuned CatBoost 	    3.2532      1.9726   0.5860
 
 Base LGBM		    1.1290      0.6355   0.9501
-Tuned LGBM 		    4.3621      2.6266   0.2556
-
+Final LGBM          4.3262      2.5978   0.2679
 
 ================ TEST METRICS =================
     Model             RMSE        MAE       R2
@@ -34,7 +33,7 @@ Base CatBoost 	     5.9352    3.2670  -0.0476
 Tuned CatBoost 	     5.4832    3.2269   0.1059
 
 Base LGBM		     6.4048    3.5340  -0.2199
-Tuned LGBM 		     5.3048    3.5635   0.1632
+Final LGBM           5.2633    3.5318   0.1762
 
 
 
@@ -46,8 +45,8 @@ Random Data Models Comparison
 
                                Model               Predicted Roof Fall Rate
         Mining_CatBoost_Model.joblib                    2.2885
-        Mining_LightGBM_Model.joblib                    3.2039
-         Mining_XGBoost_Model.joblib                   13.7785
+        Mining_LightGBM_Model.joblib                    3.2017
+         Mining_XGBoost_Model.joblib                    3.9732
 Mining_LinearRegression_Model.joblib                   15.2786
     Mining_DecisionTree_Model.joblib                    6.9864
     Mining_RandomForest_Model.joblib                    4.7497
