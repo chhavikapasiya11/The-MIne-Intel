@@ -1,15 +1,17 @@
 import pandas as pd
 import numpy as np
 
-from sklearn.model_selection import StratifiedShuffleSplit
-from sklearn.pipeline import Pipeline
+from sklearn.model_selection import StratifiedShuffleSplit, cross_validate, RandomizedSearchCV
 from sklearn.impute import SimpleImputer
+from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
-from sklearn.metrics import r2_score, mean_absolute_error, mean_squared_error
 
-from lightgbm import LGBMRegressor
+from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
+from scipy.stats import randint, uniform
+from joblib import dump
 
-# 1) Load selected columns
+
+
 selected_columns = [
     "CMRR", "PRSUP", "depth_of_ cover",
     "intersection_diagonal", "mining_hight",
@@ -19,15 +21,13 @@ selected_columns = [
 df = pd.read_csv("original_data.csv")
 df = df[selected_columns]
 
-# 2) Log-transform (on numeric features only)
-log_cols = [
-    "CMRR", "PRSUP", "depth_of_ cover",
-    "intersection_diagonal", "mining_hight"
-]
-
+# LOG TRANSFORM
+log_cols = ["CMRR","PRSUP","depth_of_ cover","intersection_diagonal","mining_hight"]
 df[log_cols] = np.log1p(df[log_cols])
 
-# 3) Train–Test Split (Stratified by fall)
+# df.head()
+
+
 split = StratifiedShuffleSplit(n_splits=1, test_size=0.2, random_state=42)
 
 for train_idx, test_idx in split.split(df, df["fall"]):
@@ -37,80 +37,85 @@ for train_idx, test_idx in split.split(df, df["fall"]):
 X_train = train.drop(["roof_fall_rate", "fall"], axis=1)
 y_train = train["roof_fall_rate"]
 
-X_test = test.drop(["roof_fall_rate", "fall"], axis=1)
-y_test = test["roof_fall_rate"]
+X_test  = test.drop(["roof_fall_rate", "fall"], axis=1)
+y_test  = test["roof_fall_rate"]
 
-# 4) Preprocessing Pipeline
+
+# PREPROCESSING PIPELINE
 num_pipe = Pipeline([
-    ("imputer", SimpleImputer(strategy="median")),
-    ("scaler", StandardScaler())
+    ("scaler",  StandardScaler())
 ])
 
 X_train_prep = num_pipe.fit_transform(X_train)
 X_test_prep  = num_pipe.transform(X_test)
 
-# 5) LightGBM Model
-lgbm = LGBMRegressor(
-    n_estimators=300,
-    learning_rate=0.1,
-    max_depth=3,
-    num_leaves=15,
-    min_child_samples=1,
-    reg_lambda=1.0,
-    reg_alpha=0.5,
-    random_state=42
+# SAVE PREPROCESSING PIPELINE  (ADDED)
+dump(num_pipe, "models/preprocessing_pipeline_catboost.joblib")
+print("\nSaved preprocessing pipeline → models/preprocessing_pipeline_catboost.joblib")
+
+# BASE CATBOOST MODEL
+from catboost import CatBoostRegressor
+
+cat = CatBoostRegressor(
+    iterations=300,
+    learning_rate=0.05,
+    depth=4,
+    loss_function='RMSE',
+    random_state=42,
+    verbose=False
 )
 
-# 6) Train
-lgbm.fit(X_train_prep, y_train)
+cat.fit(X_train_prep, y_train)
+pred = cat.predict(X_test_prep)
+# Base CatBoost Train Metrics
+train_pred_base = cat.predict(X_train_prep)
 
-# 7) Evaluate
-pred = lgbm.predict(X_test_prep)
-
-print()
-print("R2:",   round(r2_score(y_test, pred), 4))
-print("MAE:",  round(mean_absolute_error(y_test, pred), 4))
-print("RMSE:", round(np.sqrt(mean_squared_error(y_test, pred)), 4))
+r2_base_train   = round(r2_score(y_train, train_pred_base), 4)
+mae_base_train  = round(mean_absolute_error(y_train, train_pred_base), 4)
+rmse_base_train = round(np.sqrt(mean_squared_error(y_train, train_pred_base)), 4)
 
 
-# 8) 5-Fold Cross-Validation
-from sklearn.model_selection import cross_validate
+# Base Evaluation
+r2_base   = round(r2_score(y_test, pred), 4)
+mae_base  = round(mean_absolute_error(y_test, pred), 4)
+rmse_base = round(np.sqrt(mean_squared_error(y_test, pred)), 4)
 
+print("\n===== Base CATBOOST Test Metrics =====")
+print("R2:",   r2_base)
+print("MAE:",  mae_base)
+print("RMSE:", rmse_base)
+
+
+# 5-Fold Cross Validation
 scoring = {
     "rmse": "neg_root_mean_squared_error",
     "mae": "neg_mean_absolute_error",
     "r2": "r2"
 }
 
-cv = cross_validate(lgbm, X_train_prep, y_train, cv=5, scoring=scoring)
+cv = cross_validate(cat, X_train_prep, y_train, cv=5, scoring=scoring)
 
-cv_rmse_mean = -cv["test_rmse"].mean()
-cv_rmse_std  = cv["test_rmse"].std()
-cv_mae_mean  = -cv["test_mae"].mean()
-cv_r2_mean   = cv["test_r2"].mean()
+cv_rmse_mean = round(-cv["test_rmse"].mean(), 4)
+cv_rmse_std  = round(cv["test_rmse"].std(), 4)
+cv_mae_mean  = round(-cv["test_mae"].mean(), 4)
+cv_r2_mean   = round(cv["test_r2"].mean(), 4)
 
-print("\n================= 5-Fold CV =================")
-print(f"CV RMSE Mean = {cv_rmse_mean:.4f}   | Std = {cv_rmse_std:.4f}")
-print(f"CV MAE Mean  = {cv_mae_mean:.4f}")
-print(f"CV R2 Mean   = {cv_r2_mean:.4f}")
-print("=============================================")
+print("\n===== 5-Fold CV =====")
+print("CV RMSE Mean =", cv_rmse_mean, " | Std =", cv_rmse_std)
+print("CV MAE Mean  =", cv_mae_mean)
+print("CV R2 Mean   =", cv_r2_mean)
 
 
-# 9) RandomizedSearchCV
-from sklearn.model_selection import RandomizedSearchCV
-from scipy.stats import randint, uniform
-
+# Randomized Search CV
 param_dist = {
-    "n_estimators": randint(200, 1000),
+    "iterations": randint(200, 800),
     "learning_rate": uniform(0.01, 0.2),
-    "max_depth": randint(2, 10),
-    "num_leaves": randint(7, 40),
-    "reg_lambda": uniform(0, 2),
-    "reg_alpha": uniform(0, 2)
+    "depth": randint(3, 10),
+    "l2_leaf_reg": uniform(0.0, 5.0)
 }
 
 rand_search = RandomizedSearchCV(
-    estimator=LGBMRegressor(random_state=42),
+    estimator=CatBoostRegressor(loss_function='RMSE', random_state=42, verbose=False),
     param_distributions=param_dist,
     n_iter=25,
     scoring="neg_root_mean_squared_error",
@@ -122,35 +127,104 @@ rand_search = RandomizedSearchCV(
 
 rand_search.fit(X_train_prep, y_train)
 
-best_lgbm = rand_search.best_estimator_
+best_cat = rand_search.best_estimator_
 print("\nBest Params:", rand_search.best_params_)
 print("Best CV RMSE:", -rand_search.best_score_)
 
 
-# 10) Evaluate Tuned Model
-pred2 = best_lgbm.predict(X_test_prep)
+# Evaluate Tuned Model
+pred2 = best_cat.predict(X_test_prep)
+# Tuned CatBoost Train Metrics
+train_pred_tuned = best_cat.predict(X_train_prep)
 
-r2_2   = r2_score(y_test, pred2)
-mae_2  = mean_absolute_error(y_test, pred2)
-rmse_2 = np.sqrt(mean_squared_error(y_test, pred2))
+r2_tuned_train   = round(r2_score(y_train, train_pred_tuned), 4)
+mae_tuned_train  = round(mean_absolute_error(y_train, train_pred_tuned), 4)
+rmse_tuned_train = round(np.sqrt(mean_squared_error(y_train, train_pred_tuned)), 4)
 
-# Summary Table
-import pandas as pd
 
+r2_tuned   = round(r2_score(y_test, pred2), 4)
+mae_tuned  = round(mean_absolute_error(y_test, pred2), 4)
+rmse_tuned = round(np.sqrt(mean_squared_error(y_test, pred2)), 4)
+
+
+# Summary Model
 summary = pd.DataFrame([
-    ["Original LGBM", round(r2_score(y_test, pred),4),  round(mean_absolute_error(y_test, pred),4),  round(np.sqrt(mean_squared_error(y_test, pred)),4)],
-    ["Tuned LGBM",    round(r2_2,4),                    round(mae_2,4),                               round(rmse_2,4)]
-],
-columns=["Model", "R2", "MAE", "RMSE"])
+    ["Base CatBoost (Train)",  rmse_base_train, mae_base_train, r2_base_train],
+    ["Base CatBoost (Test)",   rmse_base,       mae_base,       r2_base],
 
-print("\n================ SUMMARY TABLE ================")
+    ["Tuned CatBoost (Train)", rmse_tuned_train, mae_tuned_train, r2_tuned_train],
+    ["Tuned CatBoost (Test)",  rmse_tuned,       mae_tuned,       r2_tuned]
+], columns=["Model", "RMSE", "MAE", "R2"])
+
+summary = summary.round(4)
+
+print("\n================ FULL SUMMARY TABLE ================\n")
 print(summary.to_string(index=False))
-print("===============================================")
+print("\n====================================================\n")
 
 
-# 11) Save Tuned Model
-from joblib import dump
-dump(best_lgbm, "Mining_LightGBM_Model.joblib")
-print("\nSaved model → Mining_LightGBM_Model.joblib")
+
+# Save Tuned Model
+dump(best_cat, "models/Mining_CatBoost_Model.joblib")
+print("Saved tuned model → models/Mining_CatBoost_Model.joblib")
 
 
+
+# ============================================================
+#    EXTRA: INTERPRETABILITY (Feature Importance, PDP, ICE, SHAP)
+# ============================================================
+
+print("\n=========== EXTRA CATBOOST INTERPRETABILITY START ===========\n")
+
+# Feature Importance
+fi = pd.Series(
+    best_cat.get_feature_importance(),
+    index=X_train.columns
+).sort_values(ascending=False)
+
+print("\n====== Feature Importance (Descending) ======")
+print(fi)
+
+print("\n====== Feature Importance (Ascending) ======")
+print(fi.sort_values(ascending=True))
+
+
+# PDP
+print("\n====== Sensitivity Analysis (Partial Dependence) ======")
+from sklearn.inspection import partial_dependence
+
+for col in X_train.columns:
+    idx = list(X_train.columns).index(col)
+    pdp = partial_dependence(best_cat, X_train_prep, [idx])
+    print(f"\nPDP for {col}:")
+    print("Grid:", pdp["grid_values"][0][:5], "...")
+    print("PD Values:", pdp["average"][0][:5], "...")
+
+
+# ICE
+print("\n====== Ceteris Paribus Profiles (ICE) ======")
+print("ICE shows how prediction changes when one feature varies, others stay fixed.")
+print("(Plots not displayed; only concept shown.)")
+
+
+# SHAP
+print("\n====== SHAP Explanations (Global + Local) ======")
+try:
+    import shap
+    shap.initjs()
+
+    explainer = shap.TreeExplainer(best_cat)
+    shap_values = explainer.shap_values(X_train_prep)
+    print("SHAP Global Summary computed (plot not shown).")
+
+    instance = X_test_prep[0].reshape(1, -1)
+    sv = explainer.shap_values(instance)
+
+    print("\nSHAP Local Explanation for first test sample:")
+    print(sv)
+
+except ImportError:
+    print("SHAP not installed → run: pip install shap")
+
+
+print("\n=========== EXTRA CATBOOST INTERPRETABILITY END ===========\n")
