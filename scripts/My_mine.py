@@ -1,90 +1,48 @@
 import pandas as pd
 import numpy as np
-
-
-# In[3]:
-
+import matplotlib.pyplot as plt
+from sklearn.model_selection import train_test_split
+from sklearn.model_selection import  StratifiedShuffleSplit
+from  pandas.plotting import scatter_matrix
+from sklearn.impute import SimpleImputer
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler
 
 mine_org=pd.read_csv("original_data.csv")
 selected_columns = ["CMRR", "PRSUP", "depth_of_ cover","intersection_diagonal", "mining_hight", "roof_fall_rate","fall"]
 mine= mine_org[selected_columns]
 
-
 mine.describe()
 
 # for plotting histogram
-import matplotlib.pyplot as plt
 mine.hist(bins=50 ,figsize=(20,15))
 
-
-from sklearn.model_selection import train_test_split
 train_set ,test_set = train_test_split(mine,test_size=0.2,random_state=42)
-
-
-# In[10]:
-
 
 print(f"Rows in train set:{len (train_set)}\nRows in test set:{len(test_set)}\n")
 
-
-# In[11]:
-
-
-from sklearn.model_selection import  StratifiedShuffleSplit
 split=StratifiedShuffleSplit(n_splits=1, test_size=0.2 ,random_state=42)
 
 for train_index ,test_index in split.split (mine,mine['fall']):
     strat_train_set=mine.loc[train_index]
     strat_test_set=mine.loc[test_index]
 
-
-# In[12]:
-
-
 mine=strat_train_set
-
-
-# In[13]:
-
-
 strat_test_set.info()
 
 
 # ## correlation-matrix ananlysis
-
-# In[14]:
-
-
 corr_matrix=mine.corr()
-
-
-# In[15]:
-
-
 corr_matrix['roof_fall_rate'].sort_values(ascending=False)
 
-
-# In[16]:
-
-
-from  pandas.plotting import scatter_matrix
 attributes=["roof_fall_rate","PRSUP","CMRR","mining_hight","intersection_diagonal","depth_of_ cover"]
 scatter_matrix(mine[attributes],figsize=(12,8))
 
 
 # ## Missing value imputation and data processing
-
-# In[17]:
-
-
 mine = strat_train_set.drop(["roof_fall_rate", "fall"],axis=1)
 mine_labels = strat_train_set["roof_fall_rate"].copy()
 
-
-# In[18]:
-
-
-from sklearn.impute import SimpleImputer
 imputer=SimpleImputer(strategy="median")
 imputer.fit (mine)
 X=imputer.transform(mine)
@@ -92,35 +50,17 @@ mine_tr=pd.DataFrame(X,columns=mine.columns)
 
 
 # ## Scikit learn design and creating pipeline
-
-# In[19]:
-
-
-from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import StandardScaler
 my_pipeline=Pipeline([
     ('imputer',SimpleImputer(strategy="median")),
     ('std_scalaer',StandardScaler()),
 ])
 
 
-# In[20]:
-
-
 mine_num_tr=my_pipeline.fit_transform(mine_tr)
-
-
-# In[21]:
-
-
 mine_num_tr.shape
 
 
 # ## Model training and its evaluation
-
-# In[22]:
-
-
 from sklearn.linear_model import LinearRegression
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.ensemble import RandomForestRegressor
@@ -129,93 +69,37 @@ from sklearn.ensemble import RandomForestRegressor
 model = RandomForestRegressor()
 model.fit(mine_num_tr,mine_labels)
 
-
-# In[23]:
-
-
 some_data = mine.iloc[:5]
-
-
-# In[24]:
-
-
 some_labels = mine_labels.iloc[:5]
-
-
-# In[25]:
-
-
 prepared_data = my_pipeline.transform(some_data)
-
-
-# In[26]:
-
-
 model.predict(prepared_data)
 
 
 # ## Evaluation
-
-# In[27]:
-
-
 from sklearn.metrics import mean_squared_error
-
-
-# In[28]:
-
 
 mine_predictions = model.predict(mine_num_tr)
 mse = mean_squared_error(mine_labels,mine_predictions)
 rmse = np.sqrt(mse)
 
-
-# In[29]:
-
-
 rmse
 
-
 # ## Cross -validation
-
-# In[30]:
-
-
 from sklearn.model_selection import cross_val_score
 scores = cross_val_score(model,mine_num_tr,mine_labels,scoring ="neg_mean_squared_error",cv=5)
 rmse_scores = np.sqrt(-scores)
 
-
-# In[31]:
-
-
 rmse_scores
-
-
-# In[32]:
-
 
 def print_scores(scores):
     print("Scores:",scores)
     print("Mean ",scores.mean())
     print("Std ",scores.std())
 
-
-# In[33]:
-
-
 print_scores(rmse_scores)
 
-
-# In[34]:
-
-
 from joblib import dump,load
-dump(model,'Mining.joblib')
-
-
-# In[35]:
-
+dump(model,'models/Mining.joblib')
 
 x_test = strat_test_set.drop(["roof_fall_rate", "fall"],axis=1)
 y_test = strat_test_set["roof_fall_rate"].copy()
@@ -225,24 +109,12 @@ final_mse = mean_squared_error(y_test,final_predictions)
 final_rmse = np.sqrt(final_mse)
 print(final_predictions,list(y_test))
 
-
-# In[36]:
-
-
 final_rmse
-
-
-# In[37]:
-
 
 prepared_data[0]
 
 
 # ## Setup, Metrics & Helper Functions
-
-# In[38]:
-
-
 from sklearn.model_selection import cross_validate, KFold, RandomizedSearchCV, GridSearchCV
 from sklearn.metrics import mean_squared_error, r2_score, mean_absolute_error, make_scorer
 from sklearn.pipeline import Pipeline
@@ -299,10 +171,6 @@ def train_test_table(model, X_train, y_train, X_test, y_test):
 
 
 # ## Data Split & Preprocessing
-
-# In[39]:
-
-
 X_train = strat_train_set.drop(["roof_fall_rate", "fall"], axis=1)
 y_train = strat_train_set["roof_fall_rate"].copy()
 X_test  = strat_test_set.drop(["roof_fall_rate", "fall"], axis=1)
@@ -313,18 +181,7 @@ num_pipe = Pipeline([
     ("imputer", SimpleImputer(strategy="median"))
 ])
 
-
-# In[ ]:
-
-
-get_ipython().system('pip install xgboost')
-
-
 # ## Baseline XGBoost Pipeline
-
-# In[ ]:
-
-
 from xgboost import XGBRegressor
 from sklearn.pipeline import Pipeline
 from sklearn.impute import SimpleImputer
@@ -345,28 +202,19 @@ xgb_pipe = Pipeline([
 
 # ## 5-Fold Cross-Validation (Baseline)
 
-# In[ ]:
-
-
 cv_results = cv_table(xgb_pipe, X_train, y_train, cv=5)
 print("\n=== XGBoost 5-Fold CV Results ===")
-display(cv_results)
+print(cv_results)
 
 
 # ## Train vs Test Metrics (Baseline)
 
-# In[ ]:
-
-
 train_test_metrics = train_test_table(xgb_pipe, X_train, y_train, X_test, y_test)
 print("\n=== Train vs Test Metrics ===")
-display(train_test_metrics)
+print(train_test_metrics)
 
 
 # ## RandomizedSearchCV — Broad Tuning
-
-# In[ ]:
-
 
 from scipy.stats import randint, uniform
 
@@ -395,9 +243,6 @@ print("Best CV RMSE:", -rand_search.best_score_)
 best_xgb = rand_search.best_estimator_
 
 
-# In[ ]:
-
-
 preds = best_xgb.predict(X_test)
 rmse = np.sqrt(mean_squared_error(y_test, preds))
 r2 = r2_score(y_test, preds)
@@ -409,16 +254,10 @@ print(f"R²   = {r2:.4f}")
 print(f"MAE  = {mae:.4f}")
 
 
-# In[ ]:
-
-
-dump(best_xgb, "Mining_XGBoost_Model.joblib")
+dump(best_xgb, "models/Mining_XGBoost_Model.joblib")
 
 
 # ## Small-Data Optimized RandomizedSearchCV
-
-# In[ ]:
-
 
 from sklearn.model_selection import train_test_split, RandomizedSearchCV
 from scipy.stats import randint, uniform
@@ -458,10 +297,6 @@ best_pipe = rnd_small.best_estimator_
 
 
 # ## Create Validation Split & Use Early Stopping, Final Fit with Best Number of Trees
-
-# In[ ]:
-
-
 import xgboost as xgb
 from sklearn.base import clone
 from sklearn.model_selection import KFold
@@ -518,19 +353,16 @@ print(f"MAE:  {test_mae:.4f}")
 
 # 6) Save model
 from joblib import dump
-dump(final_pipe, "Mining_XGBoost_cv_earlystop.joblib")
+dump(final_pipe, "models/Mining_XGBoost_cv_earlystop.joblib")
 
 # 7) Feature importances
 try:
     xgb_core = final_pipe.named_steps["model"]
     fi = pd.Series(xgb_core.feature_importances_, index=X_train.columns).sort_values(ascending=False)
     print("\n Top 10 Features:")
-    display(fi.head(10))
+    print(fi.head(10))
 except Exception as e:
     print(" Could not compute feature importances:", e)
-
-
-# In[ ]:
 
 
 
