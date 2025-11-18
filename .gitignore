@@ -47,5 +47,5 @@ Thumbs.db
 
 # ---- Data ----
 # Ignore raw CSV files if you don’t want to push them
-# original_data.csv
-# *.csv
+ original_data.csv
+ *.csv
