@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Mine-Intel Predictor</title>
+</head>
+<body>
+  <h2>Mine-Intel Roof Fall Prediction</h2>
+
+  <input id="cmrr" placeholder="CMRR">
+  <input id="prsup" placeholder="PRSUP">
+  <input id="depth" placeholder="Depth of cover">
+  <input id="diag" placeholder="Intersection diagonal">
+  <input id="height" placeholder="Mining height">
+
+  <button onclick="predict()">Predict</button>
+
+  <p id="result"></p>
+
+  <script>
+    async function predict() {
+
+      const data = {
+        "CMRR": parseFloat(document.getElementById("cmrr").value),
+        "PRSUP": parseFloat(document.getElementById("prsup").value),
+        "depth_of_ cover": parseFloat(document.getElementById("depth").value),
+        "intersection_diagonal": parseFloat(document.getElementById("diag").value),
+        "mining_hight": parseFloat(document.getElementById("height").value)
+      };
+
+      const res = await fetch("http://127.0.0.1:5000/predict", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data)
+      });
+
+      const output = await res.json();
+      document.getElementById("result").innerHTML =
+        "Predicted Roof Fall Rate: " + output.prediction;
+    }
+  </script>
+</body>
+</html>
