@@ -8,6 +8,35 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import r2_score, mean_absolute_error, mean_squared_error
 
 from lightgbm import LGBMRegressor
+import warnings
+
+warnings.filterwarnings("ignore", category=UserWarning)
+warnings.filterwarnings("ignore", message=".*valid feature.*")
+warnings.filterwarnings("ignore", message=".*feature names.*")
+warnings.filterwarnings("ignore", category=FutureWarning)
+warnings.filterwarnings("ignore", category=RuntimeWarning)
+
+warnings.filterwarnings(
+    "ignore",
+    message=".*LGBMRegressor was fitted with feature names.*"
+)
+
+warnings.filterwarnings(
+    "ignore",
+    message="X does not have valid feature names"
+)
+warnings.filterwarnings(
+    "ignore",
+    message=".*valid feature names.*"
+)
+
+warnings.filterwarnings("ignore", category=UserWarning)
+warnings.filterwarnings("ignore", message=".*valid feature names.*")
+warnings.filterwarnings("ignore", message=".*valid feature.*")
+
+
+import lightgbm as lgb
+lgb.basic._log_info = lambda msg: None
 
 
 # 1) Load selected columns
@@ -66,7 +95,8 @@ lgbm = LGBMRegressor(
     min_child_samples=1,
     reg_lambda=1.0,
     reg_alpha=0.5,
-    random_state=42
+    random_state=42,
+    verbose=-1
 )
 
 # Train
@@ -122,19 +152,21 @@ param_dist = {
 }
 
 rand_search = RandomizedSearchCV(
-    estimator=LGBMRegressor(random_state=42),
+    estimator=LGBMRegressor(random_state=42,verbose=-1),
     param_distributions=param_dist,
     n_iter=25,
     scoring="neg_root_mean_squared_error",
     cv=5,
     random_state=42,
     n_jobs=-1,
-    verbose=1
+    verbose=0
 )
 
 rand_search.fit(X_train_prep, y_train)
 
 best_lgbm = rand_search.best_estimator_
+best_lgbm.set_params(verbose=-1)   
+
 print("\nBest Params:", rand_search.best_params_)
 print("Best CV RMSE:", -rand_search.best_score_)
 
@@ -151,18 +183,19 @@ param_dist_small = {
 }
 
 rand_small = RandomizedSearchCV(
-    estimator=LGBMRegressor(random_state=42),
+    estimator=LGBMRegressor(random_state=42,verbose=-1),
     param_distributions=param_dist_small,
     n_iter=40,
     scoring="neg_root_mean_squared_error",
     cv=5,
     random_state=42,
     n_jobs=-1,
-    verbose=1
+    verbose=0
 )
 
 rand_small.fit(X_train_prep, y_train)
 best_lgbm_small = rand_small.best_estimator_
+best_lgbm_small.set_params(verbose=-1)  
 
 print("\nSmall-Data Tuned Params:", rand_small.best_params_)
 print("Small-Data CV RMSE:", -rand_small.best_score_)
@@ -181,7 +214,7 @@ best_lgbm_small.fit(
     eval_set=[(X_val, y_val)],
     callbacks=[
         early_stopping(stopping_rounds=50),
-        log_evaluation(0)
+        log_evaluation(-1)
     ]
 )
 
@@ -191,7 +224,7 @@ print("\nBest num_boost_round =", best_rounds)
 
 # Final model
 final_lgbm = LGBMRegressor(**best_lgbm_small.get_params())
-final_lgbm.set_params(n_estimators=best_rounds)
+final_lgbm.set_params(n_estimators=best_rounds,verbose=-1)
 
 final_lgbm.fit(X_train_prep, y_train)
 
@@ -313,7 +346,8 @@ lgbm = LGBMRegressor(
     min_child_samples=1,
     reg_lambda=1.0,
     reg_alpha=0.5,
-    random_state=42
+    random_state=42,
+    verbose=-1
 )
 
 # Train
