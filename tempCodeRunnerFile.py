@@ -18,7 +18,7 @@ selected_columns = [
     "roof_fall_rate", "fall"
 ]
 
-df = pd.read_csv("original_data.csv")
+df = pd.read_csv(r"C:/Users/DELL/Desktop/IMPORTANT/Projects/Mine Intel/Mine-Intel/original_data.csv")
 df = df[selected_columns]
 
 # LOG TRANSFORM
@@ -50,7 +50,7 @@ X_train_prep = num_pipe.fit_transform(X_train)
 X_test_prep  = num_pipe.transform(X_test)
 
 # SAVE PREPROCESSING PIPELINE  (ADDED)
-dump(num_pipe, "models/preprocessing_pipeline_catboost.joblib")
+dump(num_pipe, "../models/preprocessing_pipeline_catboost.joblib")
 print("\nSaved preprocessing pipeline → models/preprocessing_pipeline_catboost.joblib")
 
 # BASE CATBOOST MODEL
@@ -165,7 +165,7 @@ print("\n====================================================\n")
 
 
 # Save Tuned Model
-dump(best_cat, "models/Mining_CatBoost_Model.joblib")
+dump(best_cat, "../models/Mining_CatBoost_Model.joblib")
 print("Saved tuned model → models/Mining_CatBoost_Model.joblib")
 
 
