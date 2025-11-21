@@ -1,21 +1,13 @@
-'use client';
+"use client";
 
 import { useState } from 'react';
 import { extractFeaturesFromText } from '@/utils/nlp';
+import { useAppState } from '@/context/AppState';
 import type { ChatMessage, PredictionPayload } from '@/types';
 
-interface ChatAssistantProps {
-  chatHistory: ChatMessage[];
-  onChatUpdate: (history: ChatMessage[]) => void;
-  onExtraction: (values: Partial<PredictionPayload>) => void;
-}
-
-export function ChatAssistant({
-  chatHistory,
-  onChatUpdate,
-  onExtraction,
-}: ChatAssistantProps) {
+export function ChatAssistant() {
   const [input, setInput] = useState('');
+  const { chatHistory, addChatMessage, setFormValues } = useAppState();
 
   const processNLPInput = (text: string): string => {
     const cleaned = text.trim();
@@ -24,7 +16,8 @@ export function ChatAssistant({
     }
 
     const extracted = extractFeaturesFromText(cleaned);
-    
+    console.debug('[ChatAssistant] extracted features:', extracted);
+
     // Update form values with extracted features
     const extractedValues: Partial<PredictionPayload> = {};
     for (const [field, value] of Object.entries(extracted)) {
@@ -32,9 +25,10 @@ export function ChatAssistant({
         extractedValues[field as keyof PredictionPayload] = value;
       }
     }
-    
+
     if (Object.keys(extractedValues).length > 0) {
-      onExtraction(extractedValues);
+      console.debug('[ChatAssistant] will setFormValues with:', extractedValues);
+      setFormValues(extractedValues);
     }
 
     const filled = Object.entries(extracted)
@@ -68,23 +62,16 @@ export function ChatAssistant({
       content: input.trim(),
     };
 
-    const newHistory = [...chatHistory, userMessage];
-    onChatUpdate(newHistory);
-
     const response = processNLPInput(input);
     const assistantMessage: ChatMessage = {
       role: 'assistant',
       content: response,
     };
 
-    onChatUpdate([...newHistory, assistantMessage]);
+    // Add both user and assistant messages to the shared chat history
+    addChatMessage(userMessage);
+    addChatMessage(assistantMessage);
     setInput('');
-
-    // Limit chat history to 12 messages
-    if (newHistory.length + 1 > 12) {
-      const limited = [...newHistory, assistantMessage].slice(-12);
-      onChatUpdate(limited);
-    }
   };
 
   return (
