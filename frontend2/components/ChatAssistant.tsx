@@ -84,13 +84,34 @@ export function ChatAssistant() {
       </p>
 
       <div className="chat-panel">
-        <div className="chat-messages">
+        <div
+          className="chat-messages"
+          style={{
+            maxHeight: '320px',
+            minHeight: '200px',
+            overflowY: 'auto',
+            paddingRight: '4px',
+            marginBottom: '1rem',
+            background: 'rgba(0,0,0,0.03)',
+            borderRadius: '0.5rem',
+          }}
+        >
           {chatHistory.map((message, index) => (
             <div
               key={index}
               className={`chat-message ${message.role} ${
                 message.role === 'user' ? 'user' : 'assistant'
               }`}
+              style={{
+                color: message.role === 'user' ? '#444' : '#fff',
+                background: message.role === 'user' ? '#f6e27a' : '#222',
+                borderRadius: '0.75rem',
+                marginBottom: '0.5rem',
+                padding: '0.75rem 1rem',
+                boxShadow: '0 1px 4px rgba(0,0,0,0.08)',
+                textAlign: 'left',
+                wordBreak: 'break-word',
+              }}
             >
               <span className="mr-2">
                 {message.role === 'user' ? '👷' : '🤖'}
