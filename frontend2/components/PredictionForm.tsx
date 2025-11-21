@@ -27,7 +27,7 @@ const FEATURE_FIELDS = {
     minValue: 0.0,
     maxValue: 20.0,
   },
-  mining_hight: {
+  mining_height: {
     help: 'Mining height in meters',
     minValue: 0.0,
     maxValue: 10.0,
