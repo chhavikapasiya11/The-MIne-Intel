@@ -22,6 +22,8 @@ import xgboost as xgb
 from scipy.stats import randint, uniform
 from joblib import dump
 
+import os
+os.makedirs("../models", exist_ok=True)
 
 # Load Data
 selected_columns = [
@@ -30,8 +32,8 @@ selected_columns = [
     "roof_fall_rate", "fall"
 ]
 
-mine_org = pd.read_csv("original_data.csv")
-mine = mine_org[selected_columns]
+df = pd.read_csv(r"C:/Users/DELL/Desktop/IMPORTANT/Projects/Mine Intel/Mine-Intel/original_data.csv")
+mine = df[selected_columns]
 
 
 # Stratified Split
@@ -247,7 +249,7 @@ print(f"MAE  = {test_mae:.4f}")
 
 # Save Model
 
-dump(final_pipe, "models/Mining_XGBoost_Model.joblib")
+dump(final_pipe, "../models/Mining_XGBoost_Model.joblib")
 
 print("\nSaved final model → models/Mining_XGBoost_Model.joblib")
 
@@ -264,3 +266,5 @@ try:
 
 except Exception as e:
     print("Feature importance error:", e)
+
+
