@@ -10,6 +10,9 @@ from sklearn.metrics import r2_score, mean_absolute_error, mean_squared_error
 from lightgbm import LGBMRegressor
 import warnings
 
+import os
+os.makedirs("../models", exist_ok=True)
+
 warnings.filterwarnings("ignore", category=UserWarning)
 warnings.filterwarnings("ignore", message=".*valid feature.*")
 warnings.filterwarnings("ignore", message=".*feature names.*")
@@ -46,7 +49,7 @@ selected_columns = [
     "roof_fall_rate", "fall"
 ]
 
-df = pd.read_csv("original_data.csv")
+df = pd.read_csv(r"C:/Users/DELL/Desktop/IMPORTANT/Projects/Mine Intel/Mine-Intel/original_data.csv")
 df = df[selected_columns]
 
 # 2) Log-transform
@@ -82,7 +85,7 @@ X_test_prep  = num_pipe.transform(X_test)
 
 # SAVE PREPROCESSING PIPELINE
 from joblib import dump
-dump(num_pipe, "models/preprocessing_pipeline_lightGBM.joblib")
+dump(num_pipe, "../models/preprocessing_pipeline_lightGBM.joblib")
 print("\nSaved preprocessing pipeline → models/preprocessing_pipeline_lightGBM.joblib")
 
 
@@ -273,7 +276,7 @@ print("=====================================================")
 
 
 # 10) Save Tuned Model (best model)
-dump(final_lgbm, "models/Mining_LightGBM_Model.joblib")
+dump(final_lgbm, "../models/Mining_LightGBM_Model.joblib")
 print("\nSaved model → models/Mining_LightGBM_Model.joblib")
 
 
@@ -297,7 +300,7 @@ selected_columns = [
     "roof_fall_rate", "fall"
 ]
 
-df = pd.read_csv("original_data.csv")
+df = pd.read_csv(r"C:/Users/DELL/Desktop/IMPORTANT/Projects/Mine Intel/Mine-Intel/original_data.csv")
 df = df[selected_columns]
 
 # 2) Log-transform
@@ -333,7 +336,7 @@ X_test_prep  = num_pipe.transform(X_test)
 
 # SAVE PREPROCESSING PIPELINE
 from joblib import dump
-dump(num_pipe, "models/preprocessing_pipeline_lightGBM.joblib")
+dump(num_pipe, "../models/preprocessing_pipeline_lightGBM.joblib")
 print("\nSaved preprocessing pipeline → models/preprocessing_pipeline_lightGBM.joblib")
 
 
@@ -521,7 +524,7 @@ print("=====================================================")
 
 
 # 10) Save Tuned Model (best model)
-dump(final_lgbm, "models/Mining_LightGBM_Model.joblib")
+dump(final_lgbm, "../models/Mining_LightGBM_Model.joblib")
 print("\nSaved model → models/Mining_LightGBM_Model.joblib")
 
 
