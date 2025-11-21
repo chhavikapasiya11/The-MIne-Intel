@@ -7,6 +7,16 @@ import type { ChatMessage, PredictionPayload } from '@/types';
 
 export function ChatAssistant() {
   const [input, setInput] = useState('');
+  const [isListening, setIsListening] = useState(false);
+  const [speechSupported] = useState(typeof window !== 'undefined' && 'webkitSpeechRecognition' in window);
+  let recognition: any = null;
+  if (speechSupported) {
+    const SpeechRecognition = (window as any).webkitSpeechRecognition;
+    recognition = new SpeechRecognition();
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    recognition.lang = 'en-US';
+  }
   const { chatHistory, addChatMessage, setFormValues } = useAppState();
 
   const processNLPInput = (text: string): string => {
@@ -56,22 +66,39 @@ export function ChatAssistant() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim()) return;
+    processInput(input.trim());
+  };
 
+  const processInput = (text: string) => {
     const userMessage: ChatMessage = {
       role: 'user',
-      content: input.trim(),
+      content: text,
     };
-
-    const response = processNLPInput(input);
+    const response = processNLPInput(text);
     const assistantMessage: ChatMessage = {
       role: 'assistant',
       content: response,
     };
-
-    // Add both user and assistant messages to the shared chat history
     addChatMessage(userMessage);
     addChatMessage(assistantMessage);
     setInput('');
+  };
+
+  const handleSpeechInput = () => {
+    if (!speechSupported || !recognition) return;
+    setIsListening(true);
+    recognition.start();
+    recognition.onresult = (event: any) => {
+      const transcript = event.results[0][0].transcript;
+      processInput(transcript);
+      setIsListening(false);
+    };
+    recognition.onerror = () => {
+      setIsListening(false);
+    };
+    recognition.onend = () => {
+      setIsListening(false);
+    };
   };
 
   return (
@@ -135,6 +162,17 @@ export function ChatAssistant() {
           >
             Send
           </button>
+          {speechSupported && (
+            <button
+              type="button"
+              onClick={handleSpeechInput}
+              className={`px-4 py-2 bg-yellow-400 hover:bg-yellow-500 text-black font-semibold rounded-md transition-colors ${isListening ? 'opacity-60' : ''}`}
+              disabled={isListening}
+              title="Speak your readings"
+            >
+              {isListening ? 'Listening…' : '🎤 Speak'}
+            </button>
+          )}
         </form>
       </div>
     </div>
