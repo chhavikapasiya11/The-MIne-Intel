@@ -10,6 +10,8 @@ from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 from scipy.stats import randint, uniform
 from joblib import dump
 
+import os
+os.makedirs("../models", exist_ok=True)
 
 
 selected_columns = [
@@ -18,7 +20,7 @@ selected_columns = [
     "roof_fall_rate", "fall"
 ]
 
-df = pd.read_csv("original_data.csv")
+df = pd.read_csv(r"C:/Users/DELL/Desktop/IMPORTANT/Projects/Mine Intel/Mine-Intel/original_data.csv")
 df = df[selected_columns]
 
 # LOG TRANSFORM
@@ -50,7 +52,7 @@ X_train_prep = num_pipe.fit_transform(X_train)
 X_test_prep  = num_pipe.transform(X_test)
 
 # SAVE PREPROCESSING PIPELINE  (ADDED)
-dump(num_pipe, "models/preprocessing_pipeline_catboost.joblib")
+dump(num_pipe, "../models/preprocessing_pipeline_catboost.joblib")
 print("\nSaved preprocessing pipeline → models/preprocessing_pipeline_catboost.joblib")
 
 # BASE CATBOOST MODEL
@@ -165,7 +167,7 @@ print("\n====================================================\n")
 
 
 # Save Tuned Model
-dump(best_cat, "models/Mining_CatBoost_Model.joblib")
+dump(best_cat, "../models/Mining_CatBoost_Model.joblib")
 print("Saved tuned model → models/Mining_CatBoost_Model.joblib")
 
 
@@ -204,7 +206,34 @@ for col in X_train.columns:
 # ICE
 print("\n====== Ceteris Paribus Profiles (ICE) ======")
 print("ICE shows how prediction changes when one feature varies, others stay fixed.")
-print("(Plots not displayed; only concept shown.)")
+
+# ICE PLOTS
+print("\n====== ICE PLOTS (Ceteris Paribus) ======")
+
+import matplotlib.pyplot as plt
+from sklearn.inspection import PartialDependenceDisplay
+
+# For every feature in your model
+for col in X_train.columns:
+    idx = list(X_train.columns).index(col)
+
+    fig, ax = plt.subplots(figsize=(6, 4))
+    
+    PartialDependenceDisplay.from_estimator(
+        best_cat,
+        X_train_prep,
+        features=[idx],
+        kind="both",   # gives both PDP + ICE lines
+        grid_resolution=50,
+        ax=ax
+    )
+    
+    ax.set_title(f"ICE + PDP for {col}")
+    ax.set_xlabel(col)
+    ax.set_ylabel("Predicted Roof Fall Rate")
+
+    plt.tight_layout()
+    plt.show()
 
 
 # SHAP

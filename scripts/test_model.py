@@ -1,44 +1,40 @@
 import joblib
 import numpy as np
-import os
 import pandas as pd
-
 import warnings
 
+# ===========================
+#   CLEAN WARNING FILTERS
+# ===========================
 warnings.filterwarnings("ignore", category=UserWarning)
 warnings.filterwarnings("ignore", category=FutureWarning)
 warnings.filterwarnings("ignore", category=RuntimeWarning)
+warnings.filterwarnings("ignore", message=".*valid feature names.*")
 
-warnings.filterwarnings(
-    "ignore",
-    message=".*valid feature names.*"
-)
+# ===========================
+#   MODEL PATH
+# ===========================
+MODEL_PATH = "../models/"     # because script is inside /scripts
 
-MODEL_PATH = "models/"
-
-# All model files
+# ===========================
+#   ONLY THE MODELS YOU HAVE
+# ===========================
 model_files = [
     "Mining_CatBoost_Model.joblib",
     "Mining_LightGBM_Model.joblib",
-    "Mining_XGBoost_Model.joblib",
-    "Mining_LinearRegression_Model.joblib",
-    "Mining_DecisionTree_Model.joblib",
-    "Mining_RandomForest_Model.joblib"
+    "Mining_XGBoost_Model.joblib"
 ]
 
-# Preprocessing files mapping
+# Each model requires these preprocessing pipelines
 preprocess_map = {
     "Mining_CatBoost_Model.joblib": "preprocessing_pipeline_catboost.joblib",
     "Mining_LightGBM_Model.joblib": "preprocessing_pipeline_lightGBM.joblib",
-    "Mining_XGBoost_Model.joblib": None,    # pipeline inside
-    "Mining_LinearRegression_Model.joblib": "preprocessing_pipeline_basic.joblib",
-    "Mining_DecisionTree_Model.joblib": "preprocessing_pipeline_basic.joblib",
-    "Mining_RandomForest_Model.joblib": "preprocessing_pipeline_basic.joblib",
+    "Mining_XGBoost_Model.joblib": None    # already contains pipeline
 }
 
-# -------------------------------------------------
-# FIXED TEST CASES (Risk categories)
-# -------------------------------------------------
+# ===========================
+#   FIXED TEST SAMPLES
+# ===========================
 samples = [
     {
         "name": "Low Risk",
@@ -62,18 +58,17 @@ samples = [
     }
 ]
 
-# -------------------------------------------------
-# ADD 20 RANDOM SAMPLES
-# with realistic mining ranges
-# -------------------------------------------------
+# ===========================
+#   ADDING 20 RANDOM CASES
+# ===========================
 np.random.seed(42)
 
 for i in range(1, 21):
 
     rand_sample = {
         "name": f"Random Case {i}",
-        "CMRR": np.random.randint(5, 70),          # realistic CMRR
-        "PRSUP": np.random.randint(3, 45),         # support pressure
+        "CMRR": np.random.randint(5, 70),
+        "PRSUP": np.random.randint(3, 45),
         "depth_of_ cover": np.random.randint(80, 450),
         "intersection_diagonal": round(np.random.uniform(3.0, 9.0), 2),
         "mining_hight": round(np.random.uniform(1.8, 4.5), 2)
@@ -81,9 +76,9 @@ for i in range(1, 21):
 
     samples.append(rand_sample)
 
-# -------------------------------------------------
-# RUN PREDICTIONS FOR EACH SAMPLE
-# -------------------------------------------------
+# ===========================
+#   RUN PREDICTIONS
+# ===========================
 final_output = []
 
 for sample in samples:
@@ -102,7 +97,11 @@ for sample in samples:
 
     for model_file in model_files:
 
-        model = joblib.load(MODEL_PATH + model_file)
+        # Load model
+        model_path = MODEL_PATH + model_file
+        model = joblib.load(model_path)
+
+        # Load preprocessing (if required)
         prep_file = preprocess_map[model_file]
 
         if prep_file:
@@ -111,6 +110,7 @@ for sample in samples:
         else:
             input_prepared = input_array
 
+        # Prediction
         pred = model.predict(input_prepared)[0]
 
         results.append([sample["name"], model_file, round(pred, 4)])
