@@ -19,7 +19,7 @@ export default function PredictPage() {
     },
   ]);
   const [formValues, setFormValues] = useState<PredictionPayload>({
-    CMRR: 50.0,
+    CMRR: 70.0,
     PRSUP: 40.0,
     depth_of_cover: 200.0,
     intersection_diagonal: 5.0,
