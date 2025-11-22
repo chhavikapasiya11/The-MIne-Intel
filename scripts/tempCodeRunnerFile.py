@@ -12,7 +12,6 @@ from joblib import dump
 
 import os
 os.makedirs("../models", exist_ok=True)
-print("Saving at:", os.path.abspath("../models/Mining_CatBoost_Model_Final.joblib"))
 
 
 selected_columns = [
@@ -53,8 +52,8 @@ X_train_prep = num_pipe.fit_transform(X_train)
 X_test_prep  = num_pipe.transform(X_test)
 
 # SAVE PREPROCESSING PIPELINE  (ADDED)
-dump(num_pipe, r"C:\Users\DELL\Desktop\IMPORTANT\Projects\Mine Intel\Mine-Intel\models\preprocessing_pipeline_catboost_final.joblib")
-print("\nSaved preprocessing pipeline → models/preprocessing_pipeline_catboost_final.joblib")
+dump(num_pipe, "../models/preprocessing_pipeline_catboost.joblib")
+print("\nSaved preprocessing pipeline → models/preprocessing_pipeline_catboost.joblib")
 
 # BASE CATBOOST MODEL
 from catboost import CatBoostRegressor
@@ -168,116 +167,91 @@ print("\n====================================================\n")
 
 
 # Save Tuned Model
-dump(best_cat, r"C:\Users\DELL\Desktop\IMPORTANT\Projects\Mine Intel\Mine-Intel\models\Mining_CatBoost_Model.joblib")
+dump(best_cat, "../models/Mining_CatBoost_Model.joblib")
 print("Saved tuned model → models/Mining_CatBoost_Model.joblib")
 
 
 
 # ============================================================
-# INTERPRETABILITY (Feature Importance + SHAP + Line Graphs)
+#    EXTRA: INTERPRETABILITY (Feature Importance, PDP, ICE, SHAP)
 # ============================================================
 
-print("\n=========== INTERPRETABILITY START ===========\n")
+print("\n=========== EXTRA CATBOOST INTERPRETABILITY START ===========\n")
 
-# -----------------------------------------------
-# 1. FEATURE IMPORTANCE
-# -----------------------------------------------
+# Feature Importance
 fi = pd.Series(
     best_cat.get_feature_importance(),
     index=X_train.columns
 ).sort_values(ascending=False)
 
-print("\nFeature Importance (Descending):")
+print("\n====== Feature Importance (Descending) ======")
 print(fi)
 
+print("\n====== Feature Importance (Ascending) ======")
+print(fi.sort_values(ascending=True))
 
-# -----------------------------------------------
-# 2. SHAP EXPLANATIONS
-# -----------------------------------------------
-try:
-    import shap
-    import matplotlib.pyplot as plt
 
-    shap.initjs()
+# PDP
+print("\n====== Sensitivity Analysis (Partial Dependence) ======")
+from sklearn.inspection import partial_dependence
 
-    # Build explainer
-    explainer = shap.TreeExplainer(best_cat)
-    shap_values = explainer.shap_values(X_train_prep)
+for col in X_train.columns:
+    idx = list(X_train.columns).index(col)
+    pdp = partial_dependence(best_cat, X_train_prep, [idx])
+    print(f"\nPDP for {col}:")
+    print("Grid:", pdp["grid_values"][0][:5], "...")
+    print("PD Values:", pdp["average"][0][:5], "...")
 
-    # -------------------------------------------
-    # SHAP SUMMARY (Global Beeswarm Plot)
-    # -------------------------------------------
-    plt.figure(figsize=(10, 6))
-    shap.summary_plot(
-        shap_values,
+
+print("\n====== Ceteris Paribus Profiles ======")
+print("It shows how prediction changes when one feature varies, others stay fixed.")
+
+print("\n====== Ceteris Paribus ======")
+
+import matplotlib.pyplot as plt
+from sklearn.inspection import PartialDependenceDisplay
+
+# For every feature in your model
+for col in X_train.columns:
+    idx = list(X_train.columns).index(col)
+
+    fig, ax = plt.subplots(figsize=(6, 4))
+    
+    PartialDependenceDisplay.from_estimator(
+        best_cat,
         X_train_prep,
-        feature_names=X_train.columns,
-        plot_type="dot",
-        show=False
+        features=[idx],
+        kind="both",   # gives both PDP + ICE lines
+        grid_resolution=50,
+        ax=ax
     )
-    plt.title("SHAP Summary Plot - Roof Fall Rate Model")
+    
+    ax.set_title(f"ICE + PDP for {col}")
+    ax.set_xlabel(col)
+    ax.set_ylabel("Predicted Roof Fall Rate")
+
     plt.tight_layout()
     plt.show()
 
 
-    # -------------------------------------------
-    # SHAP DEPENDENCE PLOTS FOR ALL 5 FEATURES
-    # -------------------------------------------
-    print("\nGenerating SHAP dependence plots for all features...")
+# SHAP
+print("\n====== SHAP Explanations (Global + Local) ======")
+try:
+    import shap
+    shap.initjs()
 
-    for feature in X_train.columns:
-        print(f"Plotting dependence: {feature}")
+    explainer = shap.TreeExplainer(best_cat)
+    shap_values = explainer.shap_values(X_train_prep)
+    print("SHAP Global Summary computed (plot not shown).")
 
-        plt.figure(figsize=(7, 5))
-        shap.dependence_plot(
-            feature,
-            shap_values,
-            X_train_prep,
-            feature_names=X_train.columns,
-            show=False
-        )
-        plt.title(f"SHAP Dependence – {feature}")
-        plt.tight_layout()
-        plt.show()
+    instance = X_test_prep[0].reshape(1, -1)
+    sv = explainer.shap_values(instance)
 
-
-    # -------------------------------------------
-    # OPTIONAL: LINE GRAPH PER FEATURE
-    # SHAP Value vs Feature Value (sorted)
-    # -------------------------------------------
-    print("\nGenerating SHAP line graphs (sorted)…")
-
-    for idx, feature in enumerate(X_train.columns):
-        x_vals = X_train_prep[:, idx]
-        y_vals = shap_values[:, idx]
-
-        # Sort for clean line plotting
-        order = x_vals.argsort()
-        x_sorted = x_vals[order]
-        y_sorted = y_vals[order]
-
-        plt.figure(figsize=(7, 5))
-        plt.plot(x_sorted, y_sorted, marker="o", linestyle="-")
-        plt.xlabel(feature)
-        plt.ylabel(f"SHAP Value ({feature})")
-        plt.title(f"Line Plot – SHAP Effect of {feature}")
-        plt.grid(alpha=0.3)
-        plt.tight_layout()
-        plt.show()
-
-
-    # -------------------------------------------
-    # PRINT SHAP STATISTICS (Useful for Report)
-    # -------------------------------------------
-    print("\n===== SHAP Statistics for Each Feature =====")
-    for idx, feature in enumerate(X_train.columns):
-        values = shap_values[:, idx]
-        print(
-            f"{feature:20s}  |  min: {values.min():.4f}  "
-            f"max: {values.max():.4f}  mean: {values.mean():.4f}  std: {values.std():.4f}"
-        )
+    print("\nSHAP Local Explanation for first test sample:")
+    print(sv)
 
 except ImportError:
-    print("SHAP not installed. Run: pip install shap")
+    print("SHAP not installed → run: pip install shap")
 
-print("\n=========== INTERPRETABILITY END ===========\n")
+
+print("\n=========== EXTRA CATBOOST INTERPRETABILITY END ===========\n")

@@ -85,7 +85,7 @@ X_test_prep  = num_pipe.transform(X_test)
 
 # SAVE PREPROCESSING PIPELINE
 from joblib import dump
-dump(num_pipe, "../models/preprocessing_pipeline_lightGBM.joblib")
+dump(num_pipe, "./models/preprocessing_pipeline_lightGBM_Final.joblib")
 print("\nSaved preprocessing pipeline → models/preprocessing_pipeline_lightGBM.joblib")
 
 
@@ -276,8 +276,11 @@ print("=====================================================")
 
 
 # 10) Save Tuned Model (best model)
-dump(final_lgbm, "../models/Mining_LightGBM_Model.joblib")
-print("\nSaved model → models/Mining_LightGBM_Model.joblib")
+dump(
+    final_lgbm,
+    r"C:/Users/DELL/Desktop/IMPORTANT/Projects/Mine Intel/Mine-Intel/models/Mining_LightGBM_Model_Final.joblib"
+)
+print("\nSaved model → models/Mining_LightGBM_Model_Final.joblib")
 
 
 
