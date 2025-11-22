@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -8,7 +9,7 @@ import { PredictionCard } from '@/components/PredictionCard';
 import { config } from '@/config';
 import type { PredictionPayload, ChatMessage } from '@/types';
 
-export default function Home() {
+export default function PredictPage() {
   const [prediction, setPrediction] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([
@@ -18,11 +19,11 @@ export default function Home() {
     },
   ]);
   const [formValues, setFormValues] = useState<PredictionPayload>({
-    CMRR: 50.0,
+    CMRR: 70.0,
     PRSUP: 40.0,
-  depth_of_cover: 200.0,
+    depth_of_cover: 200.0,
     intersection_diagonal: 5.0,
-  mining_height: 2.5,
+    mining_height: 2.5,
   });
 
   const handleFormSubmit = async (values: PredictionPayload) => {
@@ -50,10 +51,10 @@ export default function Home() {
   };
 
   const handleNLPExtraction = (values: Partial<PredictionPayload>) => {
-    console.debug('[Home] handleNLPExtraction received:', values);
+    console.debug('[PredictPage] handleNLPExtraction received:', values);
     setFormValues((prev) => {
       const merged = { ...prev, ...values };
-      console.debug('[Home] formValues will be:', merged);
+      console.debug('[PredictPage] formValues will be:', merged);
       return merged;
     });
   };
@@ -101,9 +102,12 @@ export default function Home() {
               onError={handleError}
               onValuesChange={handleFormUpdate}
             />
-            
-            {/* Prediction Result removed from dashboard. Only shown on /predict page. */}
-
+            {/* Prediction Result */}
+            {prediction !== null && (
+              <div className="mt-6">
+                <PredictionCard prediction={prediction} />
+              </div>
+            )}
             {/* Error Display */}
             {error && (
               <div className="mt-6 p-4 bg-red-100 dark:bg-red-900 border border-red-400 dark:border-red-700 text-red-700 dark:text-red-200 rounded-lg">
@@ -112,15 +116,12 @@ export default function Home() {
               </div>
             )}
           </div>
-
           {/* Chat Section */}
           <div className="lg:col-span-1">
             <ChatAssistant />
           </div>
         </div>
-        
       </div>
     </div>
   );
 }
-

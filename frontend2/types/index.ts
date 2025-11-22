@@ -23,7 +23,7 @@ export interface FeatureFields {
     maxValue: number;
     value: number;
   };
-  mining_hight: {
+  mining_height: {
     help: string;
     minValue: number;
     maxValue: number;
@@ -34,9 +34,9 @@ export interface FeatureFields {
 export interface PredictionPayload {
   CMRR: number;
   PRSUP: number;
-  'depth_of_ cover': number;
+  depth_of_cover: number;
   intersection_diagonal: number;
-  mining_hight: number;
+  mining_height: number;
 }
 
 export interface PredictionResponse {
@@ -51,8 +51,8 @@ export interface ChatMessage {
 export interface ExtractedFeatures {
   CMRR: number | null;
   PRSUP: number | null;
-  'depth_of_ cover': number | null;
+  depth_of_cover: number | null;
   intersection_diagonal: number | null;
-  mining_hight: number | null;
+  mining_height: number | null;
 }
 

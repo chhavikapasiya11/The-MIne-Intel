@@ -14,9 +14,9 @@ export function validatePayload(payload: PredictionPayload): {
   const fieldRanges: Record<keyof PredictionPayload, { min: number; max: number; name: string }> = {
     CMRR: { min: 0, max: 100, name: 'CMRR' },
     PRSUP: { min: 0, max: 100, name: 'PRSUP' },
-    'depth_of_ cover': { min: 0, max: 1000, name: 'Depth of cover' },
+    depth_of_cover: { min: 0, max: 1000, name: 'Depth of cover' },
     intersection_diagonal: { min: 0, max: 20, name: 'Intersection diagonal' },
-    mining_hight: { min: 0, max: 10, name: 'Mining height' },
+    mining_height: { min: 0, max: 10, name: 'Mining height' },
   };
 
   for (const [field, value] of Object.entries(payload)) {

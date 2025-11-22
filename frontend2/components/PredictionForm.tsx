@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { predictRoofFallRate } from '@/services/api-client';
 import { validatePayload } from '@/utils/validators';
+import { useAppState } from '@/context/AppState';
 import type { PredictionPayload } from '@/types';
 
 const FEATURE_FIELDS = {
@@ -16,7 +17,7 @@ const FEATURE_FIELDS = {
     minValue: 0.0,
     maxValue: 100.0,
   },
-  'depth_of_ cover': {
+  depth_of_cover: {
     help: 'Depth of cover in meters',
     minValue: 0.0,
     maxValue: 1000.0,
@@ -26,7 +27,7 @@ const FEATURE_FIELDS = {
     minValue: 0.0,
     maxValue: 20.0,
   },
-  mining_hight: {
+  mining_height: {
     help: 'Mining height in meters',
     minValue: 0.0,
     maxValue: 10.0,
@@ -34,54 +35,79 @@ const FEATURE_FIELDS = {
 } as const;
 
 interface PredictionFormProps {
-  initialValues: PredictionPayload;
-  onSubmit: (values: PredictionPayload) => void;
-  onPrediction: (prediction: number) => void;
-  onError: (error: string) => void;
-  onValuesChange: (values: PredictionPayload) => void;
+  initialValues?: PredictionPayload;
+  onSubmit?: (values: PredictionPayload) => void;
+  onPrediction?: (prediction: number) => void;
+  onError?: (error: string) => void;
+  onValuesChange?: (values: PredictionPayload) => void;
 }
 
 export function PredictionForm({
-  initialValues,
+  initialValues: propInitialValues,
   onSubmit,
   onPrediction,
   onError,
   onValuesChange,
 }: PredictionFormProps) {
+  const app = useAppState();
+  const initialValues = propInitialValues ?? app.formValues;
   const [values, setValues] = useState<PredictionPayload>(initialValues);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
+    // On mount, set local state from initialValues
     setValues(initialValues);
-  }, [initialValues]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Merge context formValues (from chat) into local state, but only for fields that differ
+  useEffect(() => {
+    Object.entries(app.formValues).forEach(([key, value]) => {
+      if (values[key as keyof PredictionPayload] !== value && value !== undefined) {
+        setValues((prev) => ({ ...prev, [key]: value as number }));
+      }
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [app.formValues]);
 
   useEffect(() => {
-    onValuesChange(values);
+    // notify parent callback if provided
+    if (onValuesChange) onValuesChange(values);
   }, [values, onValuesChange]);
 
   const handleChange = (field: keyof PredictionPayload, value: number) => {
-    setValues((prev) => ({ ...prev, [field]: value }));
+    setValues((prev) => {
+      const updated = { ...prev, [field]: value };
+      if (app) app.setFormValues(updated);
+      return updated;
+    });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    onError('');
+  if (onError) onError('');
+  if (app) app.setError(null);
 
     const validation = validatePayload(values);
     if (!validation.valid) {
-      onError(validation.errors.join(' • '));
+      const msg = validation.errors.join(' • ');
+      if (onError) onError(msg);
+      if (app) app.setError(msg);
       setIsLoading(false);
       return;
     }
 
-    onSubmit(values);
+  if (onSubmit) onSubmit(values);
 
     try {
       const response = await predictRoofFallRate(values);
-      onPrediction(response.prediction);
+  if (onPrediction) onPrediction(response.prediction);
+  if (app) app.setPrediction(response.prediction);
     } catch (err) {
-      onError(err instanceof Error ? err.message : 'An unknown error occurred');
+  const msg = err instanceof Error ? err.message : 'An unknown error occurred';
+  if (onError) onError(msg);
+  if (app) app.setError(msg);
     } finally {
       setIsLoading(false);
     }

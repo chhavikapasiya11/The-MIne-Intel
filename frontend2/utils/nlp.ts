@@ -32,7 +32,7 @@ const FIELD_SYNONYMS: Record<keyof ExtractedFeatures, string[]> = {
     'r support'
   ],
 
-  'depth_of_ cover': [
+  depth_of_cover: [
     'depth of cover',
     'overburden',
     'cover depth',
@@ -63,7 +63,7 @@ const FIELD_SYNONYMS: Record<keyof ExtractedFeatures, string[]> = {
     'crosscut d'
   ],
 
-  mining_hight: [
+  mining_height: [
     'mining height',
     'seam height',
     'extraction height',
@@ -99,9 +99,9 @@ export function extractFeaturesFromText(text: string): ExtractedFeatures {
   const extracted: ExtractedFeatures = {
     CMRR: null,
     PRSUP: null,
-    'depth_of_ cover': null,
+    depth_of_cover: null,
     intersection_diagonal: null,
-    mining_hight: null,
+    mining_height: null,
   };
 
   for (const [field, synonyms] of Object.entries(FIELD_SYNONYMS)) {
