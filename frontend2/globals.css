@@ -1,0 +1,77 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom global styles for a clean look */
+
+body {
+	font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+	background-color: #fff;
+	color: #222;
+	min-height: 100vh;
+	margin: 0;
+	padding: 0;
+}
+
+html.dark body {
+	background-color: #111;
+	color: #fff;
+}
+
+a {
+	transition: color 0.2s, background 0.2s;
+	text-decoration: none;
+	color: #222;
+}
+
+html.dark a {
+	color: #fff200;
+}
+
+.btn-primary, .bg-primary-600 {
+	background-color: #ffd600 !important;
+	color: #222 !important;
+	border: none;
+}
+
+.btn-primary:hover, .bg-primary-700 {
+	background-color: #fff200 !important;
+	color: #111 !important;
+}
+
+h1, h2, h3, h4, h5, h6 {
+	font-weight: 600;
+	margin-bottom: 0.5em;
+}
+
+.container {
+	max-width: 1200px;
+	margin: 0 auto;
+	padding-left: 1rem;
+	padding-right: 1rem;
+}
+
+.shadow-md {
+	box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+}
+
+a {
+	transition: color 0.2s, background 0.2s;
+	text-decoration: none;
+}
+
+h1, h2, h3, h4, h5, h6 {
+	font-weight: 600;
+	margin-bottom: 0.5em;
+}
+
+.container {
+	max-width: 1200px;
+	margin: 0 auto;
+	padding-left: 1rem;
+	padding-right: 1rem;
+}
+
+.shadow-md {
+	box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+}
