@@ -7,7 +7,7 @@ app = Flask(__name__)
 CORS(app)
 
 model = joblib.load("../models/Mining_CatBoost_Model.joblib")
-preprocess = joblib.load("../models/preprocessing_pipeline_catboost.joblib")
+preprocess = joblib.load("../models/preprocessing_pipeline_catboost_final.joblib")
 
 @app.route("/")
 def home():
