@@ -21,9 +21,14 @@ from xgboost import XGBRegressor
 import xgboost as xgb
 from scipy.stats import randint, uniform
 from joblib import dump
-
+import shap
+import matplotlib.pyplot as plt
 import os
-os.makedirs("../models", exist_ok=True)
+
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # scripts → project root
+MODEL_DIR = os.path.join(BASE_DIR, "models")
+DATA_PATH = os.path.join(BASE_DIR, "original_data.csv")
+os.makedirs(MODEL_DIR, exist_ok=True)
 
 # Load Data
 selected_columns = [
@@ -32,7 +37,7 @@ selected_columns = [
     "roof_fall_rate", "fall"
 ]
 
-df = pd.read_csv(r"C:/Users/DELL/Desktop/IMPORTANT/Projects/Mine Intel/Mine-Intel/original_data.csv")
+df = pd.read_csv(DATA_PATH)
 mine = df[selected_columns]
 
 
@@ -102,7 +107,6 @@ def train_test_table(model, X_train, y_train, X_test, y_test):
 
 
 # Baseline XGB Pipeline
-
 num_pipe = SimpleImputer(strategy="median")
 
 xgb_pipe = Pipeline([
@@ -127,7 +131,6 @@ train_test_table(xgb_pipe, X_train, y_train, X_test, y_test)
 
 
 # RandomizedSearchCV Tuning
-
 param_dist = {
     "model__n_estimators": randint(300, 1200),
     "model__max_depth": randint(3, 12),
@@ -235,7 +238,6 @@ final_pipe.set_params(model__n_estimators=best_rounds)
 final_pipe.fit(X_train, y_train)
 
 # Final Test Metrics
-
 pred_test = final_pipe.predict(X_test)
 test_rmse = np.sqrt(mean_squared_error(y_test, pred_test))
 test_r2   = r2_score(y_test, pred_test)
@@ -248,14 +250,11 @@ print(f"MAE  = {test_mae:.4f}")
 
 
 # Save Model
-
-dump(final_pipe, "../models/Mining_XGBoost_Model.joblib")
-
-print("\nSaved final model → models/Mining_XGBoost_Model.joblib")
+dump(final_pipe, os.path.join(MODEL_DIR, "Mining_XGBoost_Model_Final.joblib"))
+print("\nSaved final model → models/Mining_XGBoost_Model_Final.joblib")
 
 
-# Feature Importances
-
+#                 FEATURE IMPORTANCE
 try:
     xgb_core = final_pipe.named_steps["model"]
     fi = pd.Series(xgb_core.feature_importances_,
@@ -268,3 +267,43 @@ except Exception as e:
     print("Feature importance error:", e)
 
 
+#                 SHAP INTERPRETABILITY
+print("\n=========== XGBOOST SHAP INTERPRETABILITY START ===========\n")
+
+# SHAP PREP
+explainer = shap.TreeExplainer(final_pipe.named_steps["model"])
+X_train_np = prep.transform(X_train)
+shap_values = explainer.shap_values(X_train_np)
+
+# ---- SHAP Summary ----
+plt.figure(figsize=(10, 6))
+shap.summary_plot(
+    shap_values,
+    X_train_np,
+    feature_names=X_train.columns,
+    plot_type="dot",
+    show=False
+)
+plt.title("SHAP Summary Plot - XGBoost")
+plt.tight_layout()
+plt.show()
+plt.close()
+
+# ---- SHAP Dependence ----
+print("Generating SHAP dependence plots...\n")
+for feature in X_train.columns:
+    plt.figure(figsize=(7, 5))
+    shap.dependence_plot(
+        feature,
+        shap_values,
+        X_train_np,
+        feature_names=X_train.columns,
+        show=False
+    )
+    plt.title(f"SHAP Dependence – {feature}")
+    plt.tight_layout()
+    plt.show()
+    plt.close()
+
+
+print("\n=========== XGBOOST SHAP INTERPRETABILITY END ===========\n")
