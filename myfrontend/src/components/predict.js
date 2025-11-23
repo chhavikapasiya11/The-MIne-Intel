@@ -294,7 +294,6 @@ function ChatWidget({ updateForm }) {
       if (features.intersection_diagonal !== null) updateForm('intersectionDiagonal', features.intersection_diagonal);
       if (features.mining_height !== null) updateForm('miningHeight', features.mining_height);
     }
-
     setTimeout(() => {
       let botText = 'I received: "' + txt + '"';
       const extractedText = Object.entries(features)
