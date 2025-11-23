@@ -1,257 +1,111 @@
-import pandas as pd
+import joblib
 import numpy as np
+import pandas as pd
+import warnings
 
-from sklearn.model_selection import StratifiedShuffleSplit, cross_validate, RandomizedSearchCV
-from sklearn.impute import SimpleImputer
-from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import StandardScaler
+#   CLEAN WARNING FILTERS
+warnings.filterwarnings("ignore", category=UserWarning)
+warnings.filterwarnings("ignore", category=FutureWarning)
+warnings.filterwarnings("ignore", category=RuntimeWarning)
+warnings.filterwarnings("ignore", message=".*valid feature names.*")
 
-from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
-from scipy.stats import randint, uniform
-from joblib import dump
+#   MODEL PATH
+MODEL_PATH = "../models/"     # because script is inside /scripts
 
-import os
-os.makedirs("../models", exist_ok=True)
-
-
-selected_columns = [
-    "CMRR", "PRSUP", "depth_of_ cover",
-    "intersection_diagonal", "mining_hight",
-    "roof_fall_rate", "fall"
+#   ONLY THE MODELS YOU HAVE
+model_files = [
+    "Mining_CatBoost_Model.joblib",
+    "Mining_LightGBM_Model_Final.joblib",
+    "Mining_XGBoost_Model_Final.joblib"
 ]
 
-df = pd.read_csv(r"C:/Users/DELL/Desktop/IMPORTANT/Projects/Mine Intel/Mine-Intel/original_data.csv")
-df = df[selected_columns]
-
-# LOG TRANSFORM
-log_cols = ["CMRR","PRSUP","depth_of_ cover","intersection_diagonal","mining_hight"]
-df[log_cols] = np.log1p(df[log_cols])
-
-# df.head()
-
-
-split = StratifiedShuffleSplit(n_splits=1, test_size=0.2, random_state=42)
-
-for train_idx, test_idx in split.split(df, df["fall"]):
-    train = df.loc[train_idx]
-    test  = df.loc[test_idx]
-
-X_train = train.drop(["roof_fall_rate", "fall"], axis=1)
-y_train = train["roof_fall_rate"]
-
-X_test  = test.drop(["roof_fall_rate", "fall"], axis=1)
-y_test  = test["roof_fall_rate"]
-
-
-# PREPROCESSING PIPELINE
-num_pipe = Pipeline([
-    ("scaler",  StandardScaler())
-])
-
-X_train_prep = num_pipe.fit_transform(X_train)
-X_test_prep  = num_pipe.transform(X_test)
-
-# SAVE PREPROCESSING PIPELINE  (ADDED)
-dump(num_pipe, "../models/preprocessing_pipeline_catboost.joblib")
-print("\nSaved preprocessing pipeline → models/preprocessing_pipeline_catboost.joblib")
-
-# BASE CATBOOST MODEL
-from catboost import CatBoostRegressor
-
-cat = CatBoostRegressor(
-    iterations=300,
-    learning_rate=0.05,
-    depth=4,
-    loss_function='RMSE',
-    random_state=42,
-    verbose=False
-)
-
-cat.fit(X_train_prep, y_train)
-pred = cat.predict(X_test_prep)
-# Base CatBoost Train Metrics
-train_pred_base = cat.predict(X_train_prep)
-
-r2_base_train   = round(r2_score(y_train, train_pred_base), 4)
-mae_base_train  = round(mean_absolute_error(y_train, train_pred_base), 4)
-rmse_base_train = round(np.sqrt(mean_squared_error(y_train, train_pred_base)), 4)
-
-
-# Base Evaluation
-r2_base   = round(r2_score(y_test, pred), 4)
-mae_base  = round(mean_absolute_error(y_test, pred), 4)
-rmse_base = round(np.sqrt(mean_squared_error(y_test, pred)), 4)
-
-print("\n===== Base CATBOOST Test Metrics =====")
-print("R2:",   r2_base)
-print("MAE:",  mae_base)
-print("RMSE:", rmse_base)
-
-
-# 5-Fold Cross Validation
-scoring = {
-    "rmse": "neg_root_mean_squared_error",
-    "mae": "neg_mean_absolute_error",
-    "r2": "r2"
+#   EXACT PREPROCESS FILES FROM YOUR FOLDER
+preprocess_map = {
+    "Mining_CatBoost_Model.joblib": "preprocessing_pipeline_catboost_final.joblib",
+    "Mining_LightGBM_Model_Final.joblib": "preprocessing_pipeline_lightGBM_Final.joblib",
+    "Mining_XGBoost_Model_Final.joblib": None   # already includes pipeline
 }
 
-cv = cross_validate(cat, X_train_prep, y_train, cv=5, scoring=scoring)
+#   FIXED TEST SAMPLES
+samples = [
+    {
+        "name": "Low Risk",
+        "CMRR": 60, "PRSUP": 40, "depth_of_ cover": 100,
+        "intersection_diagonal": 3.0, "mining_hight": 2.0
+    },
+    {
+        "name": "Medium Risk",
+        "CMRR": 40, "PRSUP": 25, "depth_of_ cover": 180,
+        "intersection_diagonal": 4.5, "mining_hight": 2.5
+    },
+    {
+        "name": "High Risk",
+        "CMRR": 15, "PRSUP": 10, "depth_of_ cover": 320,
+        "intersection_diagonal": 6.0, "mining_hight": 3.2
+    },
+    {
+        "name": "Extreme Dangerous",
+        "CMRR": 5, "PRSUP": 3, "depth_of_ cover": 420,
+        "intersection_diagonal": 8.0, "mining_hight": 4.0
+    }
+]
 
-cv_rmse_mean = round(-cv["test_rmse"].mean(), 4)
-cv_rmse_std  = round(cv["test_rmse"].std(), 4)
-cv_mae_mean  = round(-cv["test_mae"].mean(), 4)
-cv_r2_mean   = round(cv["test_r2"].mean(), 4)
+#   ADDING 20 RANDOM CASES
+np.random.seed(42)
 
-print("\n===== 5-Fold CV =====")
-print("CV RMSE Mean =", cv_rmse_mean, " | Std =", cv_rmse_std)
-print("CV MAE Mean  =", cv_mae_mean)
-print("CV R2 Mean   =", cv_r2_mean)
+for i in range(1, 21):
 
+    rand_sample = {
+        "name": f"Random Case {i}",
+        "CMRR": np.random.randint(5, 70),
+        "PRSUP": np.random.randint(3, 45),
+        "depth_of_ cover": np.random.randint(80, 450),
+        "intersection_diagonal": round(np.random.uniform(3.0, 9.0), 2),
+        "mining_hight": round(np.random.uniform(1.8, 4.5), 2)
+    }
 
-# Randomized Search CV
-param_dist = {
-    "iterations": randint(200, 800),
-    "learning_rate": uniform(0.01, 0.2),
-    "depth": randint(3, 10),
-    "l2_leaf_reg": uniform(0.0, 5.0)
-}
+    samples.append(rand_sample)
 
-rand_search = RandomizedSearchCV(
-    estimator=CatBoostRegressor(loss_function='RMSE', random_state=42, verbose=False),
-    param_distributions=param_dist,
-    n_iter=25,
-    scoring="neg_root_mean_squared_error",
-    cv=5,
-    random_state=42,
-    n_jobs=-1,
-    verbose=1
-)
+#   RUN PREDICTIONS
+final_output = []
 
-rand_search.fit(X_train_prep, y_train)
+for sample in samples:
 
-best_cat = rand_search.best_estimator_
-print("\nBest Params:", rand_search.best_params_)
-print("Best CV RMSE:", -rand_search.best_score_)
+    print(f"\n\n### Testing sample → {sample['name']} ###\n")
 
+    input_array = np.array([[
+        sample["CMRR"],
+        sample["PRSUP"],
+        sample["depth_of_ cover"],
+        sample["intersection_diagonal"],
+        sample["mining_hight"]
+    ]])
 
-# Evaluate Tuned Model
-pred2 = best_cat.predict(X_test_prep)
-# Tuned CatBoost Train Metrics
-train_pred_tuned = best_cat.predict(X_train_prep)
+    results = []
 
-r2_tuned_train   = round(r2_score(y_train, train_pred_tuned), 4)
-mae_tuned_train  = round(mean_absolute_error(y_train, train_pred_tuned), 4)
-rmse_tuned_train = round(np.sqrt(mean_squared_error(y_train, train_pred_tuned)), 4)
+    for model_file in model_files:
 
+        # Load model
+        model_path = MODEL_PATH + model_file
+        model = joblib.load(model_path)
 
-r2_tuned   = round(r2_score(y_test, pred2), 4)
-mae_tuned  = round(mean_absolute_error(y_test, pred2), 4)
-rmse_tuned = round(np.sqrt(mean_squared_error(y_test, pred2)), 4)
+        # Load preprocessing (if required)
+        prep_file = preprocess_map[model_file]
 
+        if prep_file:
+            preprocess = joblib.load(MODEL_PATH + prep_file)
+            input_prepared = preprocess.transform(input_array)
+        else:
+            input_prepared = input_array
 
-# Summary Model
-summary = pd.DataFrame([
-    ["Base CatBoost (Train)",  rmse_base_train, mae_base_train, r2_base_train],
-    ["Base CatBoost (Test)",   rmse_base,       mae_base,       r2_base],
+        # Prediction
+        pred = model.predict(input_prepared)[0]
 
-    ["Tuned CatBoost (Train)", rmse_tuned_train, mae_tuned_train, r2_tuned_train],
-    ["Tuned CatBoost (Test)",  rmse_tuned,       mae_tuned,       r2_tuned]
-], columns=["Model", "RMSE", "MAE", "R2"])
+        results.append([sample["name"], model_file, round(pred, 4)])
 
-summary = summary.round(4)
+    df = pd.DataFrame(results, columns=["Sample", "Model", "Predicted Roof Fall Rate"])
+    print(df.to_string(index=False))
 
-print("\n================ FULL SUMMARY TABLE ================\n")
-print(summary.to_string(index=False))
-print("\n====================================================\n")
+    final_output.append(df)
 
-
-
-# Save Tuned Model
-dump(best_cat, "../models/Mining_CatBoost_Model.joblib")
-print("Saved tuned model → models/Mining_CatBoost_Model.joblib")
-
-
-
-# ============================================================
-#    EXTRA: INTERPRETABILITY (Feature Importance, PDP, ICE, SHAP)
-# ============================================================
-
-print("\n=========== EXTRA CATBOOST INTERPRETABILITY START ===========\n")
-
-# Feature Importance
-fi = pd.Series(
-    best_cat.get_feature_importance(),
-    index=X_train.columns
-).sort_values(ascending=False)
-
-print("\n====== Feature Importance (Descending) ======")
-print(fi)
-
-print("\n====== Feature Importance (Ascending) ======")
-print(fi.sort_values(ascending=True))
-
-
-# PDP
-print("\n====== Sensitivity Analysis (Partial Dependence) ======")
-from sklearn.inspection import partial_dependence
-
-for col in X_train.columns:
-    idx = list(X_train.columns).index(col)
-    pdp = partial_dependence(best_cat, X_train_prep, [idx])
-    print(f"\nPDP for {col}:")
-    print("Grid:", pdp["grid_values"][0][:5], "...")
-    print("PD Values:", pdp["average"][0][:5], "...")
-
-
-print("\n====== Ceteris Paribus Profiles ======")
-print("It shows how prediction changes when one feature varies, others stay fixed.")
-
-print("\n====== Ceteris Paribus ======")
-
-import matplotlib.pyplot as plt
-from sklearn.inspection import PartialDependenceDisplay
-
-# For every feature in your model
-for col in X_train.columns:
-    idx = list(X_train.columns).index(col)
-
-    fig, ax = plt.subplots(figsize=(6, 4))
-    
-    PartialDependenceDisplay.from_estimator(
-        best_cat,
-        X_train_prep,
-        features=[idx],
-        kind="both",   # gives both PDP + ICE lines
-        grid_resolution=50,
-        ax=ax
-    )
-    
-    ax.set_title(f"ICE + PDP for {col}")
-    ax.set_xlabel(col)
-    ax.set_ylabel("Predicted Roof Fall Rate")
-
-    plt.tight_layout()
-    plt.show()
-
-
-# SHAP
-print("\n====== SHAP Explanations (Global + Local) ======")
-try:
-    import shap
-    shap.initjs()
-
-    explainer = shap.TreeExplainer(best_cat)
-    shap_values = explainer.shap_values(X_train_prep)
-    print("SHAP Global Summary computed (plot not shown).")
-
-    instance = X_test_prep[0].reshape(1, -1)
-    sv = explainer.shap_values(instance)
-
-    print("\nSHAP Local Explanation for first test sample:")
-    print(sv)
-
-except ImportError:
-    print("SHAP not installed → run: pip install shap")
-
-
-print("\n=========== EXTRA CATBOOST INTERPRETABILITY END ===========\n")
+print("\n\n==================== ALL MODEL RESULTS COMPLETED ====================\n")
