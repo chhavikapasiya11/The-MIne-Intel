@@ -17,7 +17,14 @@ print("Saving at:", os.path.abspath("../models/Mining_CatBoost_Model_Final.jobli
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # Goes from scripts -> project root
 MODEL_DIR = os.path.join(BASE_DIR, "models")
 DATA_PATH = os.path.join(BASE_DIR, "original_data.csv")
+
+GRAPHS_BASE = os.path.dirname(os.path.abspath(__file__))   # always scripts/
+GRAPHS_DIR = os.path.join(GRAPHS_BASE, "graphs")
+
 os.makedirs(MODEL_DIR, exist_ok=True)
+os.makedirs(GRAPHS_DIR, exist_ok=True)
+print("Saving graphs at:", GRAPHS_DIR)
+
 
 selected_columns = [
     "CMRR", "PRSUP", "depth_of_ cover",
@@ -33,7 +40,6 @@ log_cols = ["CMRR","PRSUP","depth_of_ cover","intersection_diagonal","mining_hig
 df[log_cols] = np.log1p(df[log_cols])
 
 # df.head()
-
 
 split = StratifiedShuffleSplit(n_splits=1, test_size=0.2, random_state=42)
 
@@ -184,9 +190,7 @@ print("Saved tuned model → models/Mining_CatBoost_Model.joblib")
 
 print("\n=========== INTERPRETABILITY START ===========\n")
 
-# -----------------------------------------------
 # 1. FEATURE IMPORTANCE
-# -----------------------------------------------
 fi = pd.Series(
     best_cat.get_feature_importance(),
     index=X_train.columns
@@ -196,9 +200,7 @@ print("\nFeature Importance (Descending):")
 print(fi)
 
 
-# -----------------------------------------------
 # 2. SHAP EXPLANATIONS
-# -----------------------------------------------
 try:
     import shap
     import matplotlib.pyplot as plt
@@ -209,9 +211,9 @@ try:
     explainer = shap.TreeExplainer(best_cat)
     shap_values = explainer.shap_values(X_train_prep)
 
-    # -------------------------------------------
+    print("\nSaving SHAP Summary Plot...")
+
     # SHAP SUMMARY (Global Beeswarm Plot)
-    # -------------------------------------------
     plt.figure(figsize=(10, 6))
     shap.summary_plot(
         shap_values,
@@ -222,13 +224,11 @@ try:
     )
     plt.title("SHAP Summary Plot - Roof Fall Rate Model")
     plt.tight_layout()
-    plt.show()
+    plt.savefig(os.path.join(GRAPHS_DIR, "shap_summary_plot.png"), dpi=300)
     plt.close()
 
 
-    # -------------------------------------------
     # SHAP DEPENDENCE PLOTS FOR ALL 5 FEATURES
-    # -------------------------------------------
     print("\nGenerating SHAP dependence plots for all features...")
 
     for feature in X_train.columns:
@@ -244,14 +244,18 @@ try:
         )
         plt.title(f"SHAP Dependence – {feature}")
         plt.tight_layout()
-        plt.show()
+        plt.savefig(
+            os.path.join(
+                GRAPHS_DIR,
+                f"shap_dependence_{feature.replace(' ', '_')}.png"
+            ),
+            dpi=300
+        )        
         plt.close()
 
     """
-    # -------------------------------------------
     # OPTIONAL: LINE GRAPH PER FEATURE
     # SHAP Value vs Feature Value (sorted)
-    # -------------------------------------------
     print("\nGenerating SHAP line graphs (sorted)…")
 
     for idx, feature in enumerate(X_train.columns):
@@ -270,12 +274,37 @@ try:
         plt.title(f"Line Plot – SHAP Effect of {feature}")
         plt.grid(alpha=0.3)
         plt.tight_layout()
-        plt.show()
-
+        plt.savefig(
+            os.path.join(
+                GRAPHS_DIR,
+                f"shap_line_{feature.replace(' ', '_')}.png"
+            ),
+            dpi=300
+        )
+        plt.close()
     """
-    # -------------------------------------------
+    
+    print("\n===== SHAP Statistics for Each Feature =====")
+    # LOCAL SHAP (Single Sample Explanation)
+
+    sample_index = 0  # first test row
+    x_single = X_test_prep[sample_index : sample_index + 1]
+    shap_single = explainer.shap_values(x_single)[0]
+
+    print(f"\nInput Feature Values for Test[{sample_index}]:")
+    for f, val in zip(X_test.columns, X_test.iloc[sample_index].values):
+        print(f"  {f:20s}: {val}")
+
+    print("\nLocal SHAP Contributions:")
+    for feature, value in zip(X_train.columns, shap_single):
+        print(f"  {feature:20s} => {value:+.4f}")
+
+    print("\nModel base value (expected prediction):", explainer.expected_value)
+    print("Model prediction for this sample:", best_cat.predict(x_single)[0])
+    print("Prediction ≈ base + sum(local SHAPs)\n")
+
+
     # PRINT SHAP STATISTICS (Useful for Report)
-    # -------------------------------------------
     print("\n===== SHAP Statistics for Each Feature =====")
     for idx, feature in enumerate(X_train.columns):
         values = shap_values[:, idx]
