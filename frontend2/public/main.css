@@ -17,7 +17,7 @@
   --glass-border: rgba(255,255,255,0.03);
 
   /* set your image path here (uploaded file) */
---bg-image: url('assets.jpeg');
+  --bg-image: url('assets.jpeg');
 }
 
 *{box-sizing:border-box}
