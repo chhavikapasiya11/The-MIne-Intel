@@ -15,7 +15,7 @@ export const FIELD_SYNONYMS = {
     'intersection diagonal','diagonal','crosscut diagonal','diag','id','int diag','cross diag','x diag','inter diag','d length','junction d','crosscut d'
   ],
   mining_height: [
-    'mining height','seam height','extraction height','mh','height','h','mine h','seam h','ex h','work h','coal h','m height','face h'
+    'mining height','seam height','extraction height','mh','height','mine h','seam h','ex h','work h','coal h','m height','face h'
   ]
 };
 
