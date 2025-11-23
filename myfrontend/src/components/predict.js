@@ -59,7 +59,7 @@ export default function PredictPage() {
       const payload = {
         CMRR: Number(form.cmrr),
         PRSUP: Number(form.prsup),
-        "depth_of_ cover": Number(form.depthOfCover),
+        depth_of_cover: Number(form.depthOfCover),
         intersection_diagonal: Number(form.intersectionDiagonal),
         mining_hight: Number(form.miningHeight),
       };
@@ -267,6 +267,14 @@ function ChatWidget({ updateForm }) {
   const [value, setValue] = useState('');
   const [listening, setListening] = useState(false);
   const recognitionRef = useRef(null);
+  const chatLogRef = useRef(null);
+
+  // auto-scroll when messages change
+  useEffect(() => {
+    if (chatLogRef.current) {
+      chatLogRef.current.scrollTop = chatLogRef.current.scrollHeight;
+    }
+  }, [messages]);
 
   useEffect(() => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
