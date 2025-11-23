@@ -11,7 +11,7 @@ export interface FeatureFields {
     maxValue: number;
     value: number;
   };
-  'depth_of_ cover': {
+  depth_of_cover: {
     help: string;
     minValue: number;
     maxValue: number;
