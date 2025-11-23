@@ -265,9 +265,14 @@ function ChatWidget({ updateForm }) {
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState([{ from: 'bot', text: 'Hi — I can help run predictions, explain parameters or show charts. Ask me anything about roof fate rate.' }]);
   const [value, setValue] = useState('');
+  const valueRef = useRef("");  
   const [listening, setListening] = useState(false);
   const recognitionRef = useRef(null);
   const chatLogRef = useRef(null);
+ 
+  useEffect(() => {
+    valueRef.current = value;
+  }, [value]);
 
   // auto-scroll when messages change
   useEffect(() => {
@@ -282,11 +287,26 @@ function ChatWidget({ updateForm }) {
     const rec = new SpeechRecognition();
     rec.lang = 'en-US'; rec.interimResults = true; rec.maxAlternatives = 1;
     rec.onresult = (ev) => {
-      let interim = '', final = '';
-      for (let i = 0; i < ev.results.length; i++) { let res = ev.results[i]; if (res.isFinal) final += res[0].transcript; else interim += res[0].transcript; }
-      setValue(final || interim);
+  let finalText = '';
+  let interimText = '';
+
+  for (let res of ev.results) {
+    if (res.isFinal) finalText += res[0].transcript;
+    else interimText += res[0].transcript;
+  }
+
+   const text = finalText ? finalText.trim() : interimText.trim();
+      setValue(text);
+      valueRef.current = text;  
+ };
+
+   rec.onend = () => {
+      setListening(false);
+
+      const text = valueRef.current.trim(); // ⭐ Always the latest
+      if (text) send(text);                 // ⭐ Auto-submit
     };
-    rec.onend = () => setListening(false);
+    
     rec.onerror = (e) => { console.warn('Speech recognition error', e); setListening(false); };
     recognitionRef.current = rec;
     return () => { try { rec.stop(); } catch (e) { } };
