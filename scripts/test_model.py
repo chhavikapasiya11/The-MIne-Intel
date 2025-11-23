@@ -3,38 +3,34 @@ import numpy as np
 import pandas as pd
 import warnings
 
-# ===========================
 #   CLEAN WARNING FILTERS
-# ===========================
 warnings.filterwarnings("ignore", category=UserWarning)
 warnings.filterwarnings("ignore", category=FutureWarning)
 warnings.filterwarnings("ignore", category=RuntimeWarning)
 warnings.filterwarnings("ignore", message=".*valid feature names.*")
 
-# ===========================
+
+import os
+os.chdir(os.path.dirname(os.path.abspath(__file__)))
+
 #   MODEL PATH
-# ===========================
 MODEL_PATH = "../models/"     # because script is inside /scripts
 
-# ===========================
 #   ONLY THE MODELS YOU HAVE
-# ===========================
 model_files = [
     "Mining_CatBoost_Model.joblib",
-    "Mining_LightGBM_Model.joblib",
-    "Mining_XGBoost_Model.joblib"
+    "Mining_LightGBM_Model_Final.joblib",
+    "Mining_XGBoost_Model_Final.joblib"
 ]
 
-# Each model requires these preprocessing pipelines
+#   EXACT PREPROCESS FILES FROM YOUR FOLDER
 preprocess_map = {
-    "Mining_CatBoost_Model.joblib": "preprocessing_pipeline_catboost.joblib",
-    "Mining_LightGBM_Model.joblib": "preprocessing_pipeline_lightGBM.joblib",
-    "Mining_XGBoost_Model.joblib": None    # already contains pipeline
+    "Mining_CatBoost_Model.joblib": "preprocessing_pipeline_catboost_final.joblib",
+    "Mining_LightGBM_Model_Final.joblib": "preprocessing_pipeline_lightGBM_Final.joblib",
+    "Mining_XGBoost_Model_Final.joblib": None   # already includes pipeline
 }
 
-# ===========================
 #   FIXED TEST SAMPLES
-# ===========================
 samples = [
     {
         "name": "Low Risk",
@@ -58,9 +54,7 @@ samples = [
     }
 ]
 
-# ===========================
 #   ADDING 20 RANDOM CASES
-# ===========================
 np.random.seed(42)
 
 for i in range(1, 21):
@@ -76,9 +70,7 @@ for i in range(1, 21):
 
     samples.append(rand_sample)
 
-# ===========================
 #   RUN PREDICTIONS
-# ===========================
 final_output = []
 
 for sample in samples:
