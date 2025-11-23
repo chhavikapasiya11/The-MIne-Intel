@@ -7,6 +7,7 @@ import Home from "./components/main";
 import Predict from "./components/predict";
 import Params from "./components/params";
 import Graphs from "./components/graph";
+import About from "./components/about";
 
 /*import "./App.css";*/
 import "./components/main.css";
@@ -26,6 +27,7 @@ function App() {
             <Route path="/predict" element={<Predict />} />
             <Route path="/params" element={<Params />} />
             <Route path="/graphs" element={<Graphs />} />
+            <Route path="/about" element={<About />} />
           </Routes>
         </div>
       </div>

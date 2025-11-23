@@ -1,6 +1,7 @@
 // Navbar.js
 import React, { useState } from "react";
 import { FiSun, FiMoon, FiMenu, FiX } from "react-icons/fi"; // For icons
+import About from "./about";
 
 export default function Navbar() {
   const [darkMode, setDarkMode] = useState(true);
@@ -37,9 +38,6 @@ export default function Navbar() {
       </a>
       <a href="/about" style={linkStyle}>
         About
-      </a>
-      <a href="/dashboard" style={linkStyle}>
-        Dashboard
       </a>
     
       <button
