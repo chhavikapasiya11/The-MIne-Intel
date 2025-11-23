@@ -14,6 +14,10 @@ import os
 os.makedirs("../models", exist_ok=True)
 print("Saving at:", os.path.abspath("../models/Mining_CatBoost_Model_Final.joblib"))
 
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # Goes from scripts -> project root
+MODEL_DIR = os.path.join(BASE_DIR, "models")
+DATA_PATH = os.path.join(BASE_DIR, "original_data.csv")
+os.makedirs(MODEL_DIR, exist_ok=True)
 
 selected_columns = [
     "CMRR", "PRSUP", "depth_of_ cover",
@@ -21,7 +25,7 @@ selected_columns = [
     "roof_fall_rate", "fall"
 ]
 
-df = pd.read_csv(r"C:/Users/DELL/Desktop/IMPORTANT/Projects/Mine Intel/Mine-Intel/original_data.csv")
+df = pd.read_csv(DATA_PATH)
 df = df[selected_columns]
 
 # LOG TRANSFORM
@@ -53,8 +57,9 @@ X_train_prep = num_pipe.fit_transform(X_train)
 X_test_prep  = num_pipe.transform(X_test)
 
 # SAVE PREPROCESSING PIPELINE  (ADDED)
-dump(num_pipe, r"C:\Users\DELL\Desktop\IMPORTANT\Projects\Mine Intel\Mine-Intel\models\preprocessing_pipeline_catboost_final.joblib")
-print("\nSaved preprocessing pipeline → models/preprocessing_pipeline_catboost_final.joblib")
+dump(num_pipe, os.path.join(MODEL_DIR, "preprocessing_pipeline_catboost_final.joblib"))
+
+print("Saved preprocessing pipeline → models/preprocessing_pipeline_catboost_final.joblib")
 
 # BASE CATBOOST MODEL
 from catboost import CatBoostRegressor
@@ -168,7 +173,7 @@ print("\n====================================================\n")
 
 
 # Save Tuned Model
-dump(best_cat, r"C:\Users\DELL\Desktop\IMPORTANT\Projects\Mine Intel\Mine-Intel\models\Mining_CatBoost_Model.joblib")
+dump(best_cat, os.path.join(MODEL_DIR, "Mining_CatBoost_Model.joblib"))
 print("Saved tuned model → models/Mining_CatBoost_Model.joblib")
 
 
