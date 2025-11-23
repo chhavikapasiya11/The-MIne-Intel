@@ -3,6 +3,7 @@
 // as requested — you will handle routing and full-page implementations elsewhere.
 
 import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import './main.css';
 
 /* tiny helper to create elements without JSX */

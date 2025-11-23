@@ -32,13 +32,13 @@ export default function Navbar() {
 
   const navLinks = (
     <div style={{ display: "flex", gap: 20, alignItems: "center" }}>
-      <a href="#home" style={linkStyle}>
+      <a href="/#home" style={linkStyle}>
         Home
       </a>
-      <a href="#about" style={linkStyle}>
+      <a href="/about" style={linkStyle}>
         About
       </a>
-      <a href="#dashboard" style={linkStyle}>
+      <a href="/dashboard" style={linkStyle}>
         Dashboard
       </a>
     
