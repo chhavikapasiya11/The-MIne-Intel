@@ -1,9 +1,7 @@
 // main.js — plain JavaScript (no JSX)
-// Updated: Homepage-only build. Heavy implementations for PredictRate, BestParameters and GraphAnalysis have been removed
-// as requested — you will handle routing and full-page implementations elsewhere.
+// Updated: Homepage-only build. Chat widget and microphone removed; footer added.
 
-import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React from 'react';
 import './main.css';
 
 /* tiny helper to create elements without JSX */
@@ -60,102 +58,42 @@ function Home() {
     );
   }
 
-  // onClick handlers are empty/no-op — you said you'll manage routing
   return el('div', { className: 'page page-enter' },
-    el('h2', { className: 'page-title',style: { textAlign: 'center', fontSize: '28px',padding:'0px' } }, 'Roof Fate Rate — Quick Actions'),
+    el('h2', { className: 'page-title', style: { textAlign: 'center', fontSize: '28px', padding: '0px' } }, 'Roof Fate Rate — Quick Actions'),
     el('div', { className: 'home-grid', style: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 22, alignItems: 'start', marginTop: 8 } },
-     card(
-  'Predict Rate',
-  'Run model predictions quickly. Upload data on your dedicated predict page or trigger a run programmatically.',
-  function () {
-    window.location.href = '/predict';
-  },
-  '⚡'
-),
-
-card(
-  'Impactful Parameters',
-  'Explore feature importance and recommended parameter settings to reduce roof fate rate in the field.',
-  function () {
-    window.location.href = '/params';
-  },
-  '🛠️'
-),
-
-card(
-  'Graph Analysis',
-  'View interactive charts, residuals and time trends. Swap the placeholder with Chart.js where you like.',
-  function () {
-    window.location.href = '/graphs';
-  },
-  '📈'
-)
-
-    )
-  );
-}
-
-/* ---------------- Minimal Chat Widget with Mic ---------------- */
-function ChatWidget() {
-  var _useState = useState(false), open = _useState[0], setOpen = _useState[1];
-  var _useState2 = useState([{ from: 'bot', text: 'Hi — I can help run predictions, explain parameters or show charts. Ask me anything about roof fate rate.' }]), messages = _useState2[0], setMessages = _useState2[1];
-  var _useState3 = useState(''), value = _useState3[0], setValue = _useState3[1];
-  var _useState4 = useState(false), listening = _useState4[0], setListening = _useState4[1];
-  var recognitionRef = useRef(null);
-
-  useEffect(function () {
-    var SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRecognition) return;
-    var rec = new SpeechRecognition(); rec.lang = 'en-US'; rec.interimResults = true; rec.maxAlternatives = 1;
-
-    rec.onresult = function (ev) {
-      var interim = ''; var final = '';
-      for (var i = 0; i < ev.results.length; i++) { var res = ev.results[i]; if (res.isFinal) final += res[0].transcript; else interim += res[0].transcript; }
-      setValue(function (prev) { return final ? final : interim; });
-    };
-    rec.onend = function () { setListening(false); };
-    rec.onerror = function (e) { console.warn('Speech recognition error', e); setListening(false); };
-
-    recognitionRef.current = rec;
-    return function () { try { rec.stop(); } catch (e) { } };
-  }, []);
-
-  function toggleListening() {
-    var rec = recognitionRef.current; if (!rec) { alert('Speech recognition not supported in this browser.'); return; }
-    if (!listening) { try { rec.start(); setListening(true); } catch (e) { console.warn('start error', e); } } else { rec.stop(); setListening(false); }
-  }
-
-  function send(txt) {
-    if (!txt) return; setMessages(function (m) { return m.concat({ from: 'user', text: txt }); }); setValue('');
-    setTimeout(function () { setMessages(function (m) { return m.concat({ from: 'bot', text: 'I received: "' + txt + '" — POST data to /api/predict and return { rate, confidence }.' }); }); }, 600);
-  }
-
-  return el('div', { className: 'chat-widget' },
-    el('div', { style: { display: 'flex', alignItems: 'center', gap: 8 } },
-      el('button', { 'aria-label': 'Voice input', title: listening ? 'Stop listening' : 'Start voice input', onClick: toggleListening, style: { background: 'transparent', border: 'none', color: 'var(--accent)', fontSize: 20, cursor: 'pointer', padding: 8, borderRadius: 8 } }, listening ? '🎤⏺' : '🎤'),
-      el('button', { 'aria-label': 'Open chat', className: 'chat-toggle', onClick: function () { setOpen(!open); } }, open ? 'Close Chat' : 'Chat')
-    ),
-    open && el('div', { className: 'chat-panel card', style: { marginTop: 10 } },
-      el('div', { className: 'chat-header' }, 'Assistant'),
-      el('div', { className: 'chat-log', role: 'log', 'aria-live': 'polite', style: { maxHeight: 260 } },
-        messages.map(function (m, i) { return el('div', { key: i, className: 'chat-msg ' + (m.from === 'user' ? 'user' : 'bot') }, m.text); })
+      card(
+        'Predict Rate',
+        'Run model predictions quickly. Upload data on your dedicated predict page or trigger a run programmatically.',
+        function () { window.location.href = '/predict'; },
+        '⚡'
       ),
-      el('form', { onSubmit: function (e) { e.preventDefault(); send(value); } },
-        el('input', { placeholder: 'Ask about predictions or parameters...', value: value, onChange: function (e) { setValue(e.target.value); } }),
-        el('button', { type: 'submit', className: 'btn btn-primary' }, 'Send')
+      card(
+        'Impactful Parameters',
+        'Explore feature importance and recommended parameter settings to reduce roof fate rate in the field.',
+        function () { window.location.href = '/params'; },
+        '🛠️'
+      ),
+      card(
+        'Graph Analysis',
+        'View interactive charts, residuals and time trends. Swap the placeholder with Chart.js where you like.',
+        function () { window.location.href = '/graphs'; },
+        '📈'
       )
     )
   );
 }
 
-/* ---------------- App (homepage-only) ---------------- */
+/* ---------------- App (homepage-only, with footer only) ---------------- */
 export default function App() {
-  var bgImagePath = '/assets/assets.jpeg'; // ensure this exists in public/assets or change path
+  var bgImagePath = '/assets/assets.jpeg';
 
   return el('div', null,
     el('div', { className: 'site-bg', style: { backgroundImage: "url('" + bgImagePath + "')" } }, el('div', { className: 'techlines' })),
     el('div', { className: 'container' }, el(Home)),
-    el(ChatWidget),
-    el('div', { style: { position: 'fixed', left: 18, bottom: 18, color: 'var(--muted)', fontSize: 12 } }, )
+    el('footer', { style: { width: '100%', padding: '18px 12px', position: 'fixed', left: 0, bottom: 0, display: 'flex', justifyContent: 'center', alignItems: 'center', background: 'linear-gradient(180deg, rgba(0,0,0,0.25), rgba(0,0,0,0.35))', borderTop: '1px solid rgba(255,255,255,0.03)' } },
+      el('div', { style: { color: 'var(--muted)', fontSize: 13 } },
+        '© ' + new Date().getFullYear() + ' Roof Fate — Built for safe mining decisions.'
+      )
+    )
   );
 }

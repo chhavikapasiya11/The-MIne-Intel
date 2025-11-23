@@ -98,7 +98,7 @@ export default function About() {
         </section>
 
         <footer style={{marginTop: 32, textAlign: 'center', fontSize: 13, color: 'rgba(226,232,240,0.55)'}}>
-          © {new Date().getFullYear()} Mine‑Intel • Data‑driven, reliable, human‑focused.
+          © {new Date().getFullYear()} Mine-Intel • Data-driven, reliable, human-focused.
         </footer>
 
       </div>
