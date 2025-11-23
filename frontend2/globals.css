@@ -1,3 +1,10 @@
+.chat-message {
+	color: #222;
+}
+
+html.dark .chat-message {
+	color: #fff;
+}
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
