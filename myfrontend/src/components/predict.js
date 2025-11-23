@@ -53,15 +53,35 @@ export default function PredictPage() {
     setLoading(true);
     setResult(null);
 
-    // Demo: replace with real POST /api/predict
     try {
-      await new Promise((r) => setTimeout(r, 700));
-      const fakeRate = (Math.random() * 6 + 1.5).toFixed(2);
-      const fakeConfidence = Math.round(60 + Math.random() * 35);
-      setResult({ rate: fakeRate + '%', confidence: fakeConfidence + '%' , confidenceRaw: fakeConfidence});
+      // Backend expects keys: CMRR, PRSUP, depth_of_ cover, intersection_diagonal, mining_hight
+      const payload = {
+        CMRR: Number(form.cmrr),
+        PRSUP: Number(form.prsup),
+        "depth_of_ cover": Number(form.depthOfCover),
+        intersection_diagonal: Number(form.intersectionDiagonal),
+        mining_hight: Number(form.miningHeight),
+      };
+
+      const response = await fetch('http://127.0.0.1:5000/predict', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) throw new Error('Prediction API returned an error');
+
+      const data = await response.json();
+
+      setResult({
+        rate: data.prediction.toFixed(2) + '%',
+        confidence: 'N/A',      
+        confidenceRaw: 0
+      });
+
     } catch (err) {
       console.error(err);
-      alert('Prediction failed (demo).');
+      alert('Prediction failed: ' + err.message);
     } finally {
       setLoading(false);
     }
