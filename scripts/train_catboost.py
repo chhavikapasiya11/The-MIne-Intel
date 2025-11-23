@@ -223,6 +223,7 @@ try:
     plt.title("SHAP Summary Plot - Roof Fall Rate Model")
     plt.tight_layout()
     plt.show()
+    plt.close()
 
 
     # -------------------------------------------
@@ -244,8 +245,9 @@ try:
         plt.title(f"SHAP Dependence – {feature}")
         plt.tight_layout()
         plt.show()
+        plt.close()
 
-
+    """
     # -------------------------------------------
     # OPTIONAL: LINE GRAPH PER FEATURE
     # SHAP Value vs Feature Value (sorted)
@@ -270,7 +272,7 @@ try:
         plt.tight_layout()
         plt.show()
 
-
+    """
     # -------------------------------------------
     # PRINT SHAP STATISTICS (Useful for Report)
     # -------------------------------------------
