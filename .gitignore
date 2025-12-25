@@ -25,6 +25,9 @@ catboost_info/
 shap_plots/
 *.png
 *.svg
+# allow screenshots folder
+!ss/
+!ss/*.png
 
 # ---- Logs ----
 *.log
