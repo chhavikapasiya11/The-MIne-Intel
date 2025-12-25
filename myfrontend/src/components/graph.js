@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import cmrrImg from "./cmrr.jpeg";
 import prsupImg from "./prsup.jpeg";
 import depthImg from "./mh.jpeg";
-import shapSummaryImg from "./shap_summary_plot.png";
+import shapSummaryImg from "./shap_summary_plot.jpeg";
 import intersectionImg from "./ic.jpeg";
 import depthCoverImg from "./doc.jpeg";
 

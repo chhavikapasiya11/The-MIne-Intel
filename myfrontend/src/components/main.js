@@ -59,7 +59,7 @@ function Home() {
   }
 
   return el('div', { className: 'page page-enter' },
-    el('h2', { className: 'page-title', style: { textAlign: 'center', fontSize: '28px', padding: '0px' } }, 'Roof Fate Rate — Quick Actions'),
+    el('h2', { className: 'page-title', style: { textAlign: 'center', fontSize: '28px', padding: '0px' } }, 'Roof Fall Rate — Quick Actions'),
     el('div', { className: 'home-grid', style: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 22, alignItems: 'start', marginTop: 8 } },
       card(
         'Predict Rate',
